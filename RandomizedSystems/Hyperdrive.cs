@@ -17,7 +17,7 @@ namespace RandomizedSystems
 				ScreenMessages.PostScreenMessage ("Warp Drive cannot be activated. Please enter orbit around the nearest star.", 5.0f, ScreenMessageStyle.UPPER_CENTER);
 				return;
 			}
-			windowPosition = new Rect (Screen.width / 0.5f, Screen.height / 0.5f, 0, 0);
+			windowPosition = new Rect (100, 100, 0, 0);
 			RenderingManager.AddToPostDrawQueue (0, OnDraw);
 		}
 
@@ -57,7 +57,7 @@ namespace RandomizedSystems
 			{
 				seed += (int)c;
 			}
-			new SolarData (seedString);
+			SolarData.CreateSystem (seedString);
 			ScreenMessages.PostScreenMessage ("Warp Drive initialized. Traveling to coordinates " + seedString + ".", 3.0f, ScreenMessageStyle.UPPER_CENTER);
 		}
 	}

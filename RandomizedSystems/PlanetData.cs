@@ -11,6 +11,7 @@ namespace RandomizedSystems
 		public string name;
 		public Orbit orbit;
 		private OrbitDriver orbitDriver;
+		private OrbitData orbitData;
 		public bool hasAtmosphere = true;
 		public bool hasOxygen = true;
 		public double gravity = 0;
@@ -21,6 +22,18 @@ namespace RandomizedSystems
 		public int planetID = -1;
 		public List<CelestialBody> childBodies = new List<CelestialBody> ();
 		private const double KERBIN_GRAVITY = 3531600000000.0;
+
+		private struct OrbitData
+		{
+			public double inclination;
+			public double eccentricity;
+			public double semiMajorAxis;
+			public double longitudeAscendingNode;
+			public double argumentOfPeriapsis;
+			public double meanAnomalyAtEpoch;
+			public double epoch;
+			public CelestialBody referenceBody;
+		}
 
 		public PlanetData (CelestialBody planet, SolarData system, int id)
 		{
@@ -41,6 +54,7 @@ namespace RandomizedSystems
 			if (planet.referenceBody.name != planet.name)
 			{
 				orbit = planet.GetOrbit ();
+				orbitData = OrbitDataFromOrbit (orbit);
 				orbitDriver = planet.orbitDriver;
 			}
 
@@ -58,6 +72,7 @@ namespace RandomizedSystems
 			float value = Randomizer.GetValue ();
 			if (orbit != null)
 			{
+				orbitData = new OrbitData ();
 				#region Reference Body
 				PlanetData referenceData = null;
 				CelestialBody referenceBody = planet.referenceBody;
@@ -96,6 +111,7 @@ namespace RandomizedSystems
 					}
 				}
 				solarSystem.AddChildToPlanet (referenceData.planetID, planet);
+				orbitData.referenceBody = referenceBody;
 				#endregion
 				#region Inclination
 				int inclination = 0;
@@ -119,6 +135,7 @@ namespace RandomizedSystems
 				{
 					inclination = Randomizer.GenerateInt (0, 10);
 				}
+				orbitData.inclination = inclination;
 				#endregion
 				#region Eccentricity
 				double eccentricity = Randomizer.GetValue ();
@@ -142,6 +159,7 @@ namespace RandomizedSystems
 				{
 					eccentricity *= eccentricity;
 				}
+				orbitData.eccentricity = eccentricity;
 				#endregion
 				#region Altitude
 				double periapsis = 1;
@@ -155,7 +173,7 @@ namespace RandomizedSystems
 				{
 					secondValue = 0.01f;
 				}
-				periapsis = 250000000000 * value * secondValue;
+				periapsis = 25000000000 * value * secondValue;
 				if (referenceBody != solarSystem.sun)
 				{
 					// Not orbiting sun
@@ -172,12 +190,15 @@ namespace RandomizedSystems
 				{
 					semiMajorAxis /= (1.0 - eccentricity);
 				}
+				orbitData.semiMajorAxis = semiMajorAxis;
 				#endregion
 				#region Longitude Ascending Node
 				int lan = Randomizer.GenerateInt (0, 360);
+				orbitData.longitudeAscendingNode = lan;
 				#endregion
 				#region Argument Of Periapsis
 				int argumentOfPeriapsis = Randomizer.GenerateInt (0, 360);
+				orbitData.argumentOfPeriapsis = argumentOfPeriapsis;
 				#endregion
 				#region Mean Anomaly at Epoch
 				float meanAnomalyAtEpoch = Randomizer.GenerateFloat (0.0f, Mathf.PI * 2.0f);
@@ -187,8 +208,8 @@ namespace RandomizedSystems
 					meanAnomalyAtEpoch -= 1.0f;
 					meanAnomalyAtEpoch *= 5.0f;
 				}
+				orbitData.meanAnomalyAtEpoch = meanAnomalyAtEpoch;
 				#endregion
-				orbit = CreateOrbit (inclination, eccentricity, semiMajorAxis, lan, argumentOfPeriapsis, meanAnomalyAtEpoch, Planetarium.GetUniversalTime (), orbit, referenceBody);
 			}
 
 			// Randomize atmosphere
@@ -226,6 +247,7 @@ namespace RandomizedSystems
 			planet.bodyName = name;
 			if (orbitDriver != null)
 			{
+				orbit = CreateOrbit (orbitData, orbit);
 				orbitDriver.orbit = orbit;
 				orbitDriver.UpdateOrbit ();
 			}
@@ -237,6 +259,19 @@ namespace RandomizedSystems
 			planet.pressureMultiplier = atmospherePressureMult;
 			planet.atmosphericAmbientColor = ambientColor;
 			planet.orbitingBodies = childBodies;
+		}
+
+		private static Orbit CreateOrbit (OrbitData data, Orbit orbit)
+		{
+			return CreateOrbit (data.inclination,
+			                    data.eccentricity, 
+			                    data.semiMajorAxis, 
+			                    data.longitudeAscendingNode, 
+			                    data.argumentOfPeriapsis, 
+			                    data.meanAnomalyAtEpoch, 
+			                    data.epoch, 
+			                    orbit, 
+			                    data.referenceBody);
 		}
 
 		private static Orbit CreateOrbit (double inclination,
@@ -308,6 +343,20 @@ namespace RandomizedSystems
 			orbit.meanAnomalyAtEpoch = meanAnomalyAtEpoch;
 			orbit.epoch = epoch;
 			return orbit;
+		}
+
+		private OrbitData OrbitDataFromOrbit (Orbit orbit)
+		{
+			OrbitData data = new OrbitData ();
+			data.argumentOfPeriapsis = orbit.argumentOfPeriapsis;
+			data.eccentricity = orbit.eccentricity;
+			data.epoch = orbit.epoch;
+			data.inclination = orbit.inclination;
+			data.longitudeAscendingNode = orbit.LAN;
+			data.meanAnomalyAtEpoch = orbit.meanAnomalyAtEpoch;
+			data.referenceBody = orbit.referenceBody;
+			data.semiMajorAxis = orbit.semiMajorAxis;
+			return data;
 		}
 	}
 }
