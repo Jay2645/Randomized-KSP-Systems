@@ -7,14 +7,17 @@ namespace RandomizedSystems
 	public class PlanetData
 	{
 		public SolarData solarSystem;
+		public CelestialBody referenceBody;
 		public CelestialBody planet;
 		public string name;
 		public Orbit orbit;
 		private OrbitDriver orbitDriver;
-		private OrbitData orbitData;
+		public OrbitData orbitData;
 		public bool hasAtmosphere = true;
 		public bool hasOxygen = true;
 		public double gravity = 0;
+		public double rotationPeriod;
+		public double sphereOfInfluence;
 		public float tempMultiplier = 1.0f;
 		public double atmosphereHeight = 5;
 		public float atmospherePressureMult = 1.0f;
@@ -22,8 +25,13 @@ namespace RandomizedSystems
 		public int planetID = -1;
 		public List<CelestialBody> childBodies = new List<CelestialBody> ();
 		private const double KERBIN_GRAVITY = 3531600000000.0;
+		private const double KERBAL_ASTRONOMICAL_UNIT = 13599840256;
+		private const double KERBIN_SOI = 84159286.0;
+		private const double MUN_SOI = 2429559.1;
+		private const double KERBIN_RADIUS = 600000;
+		private const double MAX_SEMI_MAJOR_AXIS = 90118820000;
 
-		private struct OrbitData
+		public struct OrbitData
 		{
 			public double inclination;
 			public double eccentricity;
@@ -32,6 +40,7 @@ namespace RandomizedSystems
 			public double argumentOfPeriapsis;
 			public double meanAnomalyAtEpoch;
 			public double epoch;
+			public double period;
 			public CelestialBody referenceBody;
 		}
 
@@ -48,7 +57,9 @@ namespace RandomizedSystems
 			// General
 			name = planet.name;
 			gravity = planet.gravParameter;
+			rotationPeriod = planet.rotationPeriod;
 			tempMultiplier = planet.atmoshpereTemperatureMultiplier;
+			sphereOfInfluence = planet.sphereOfInfluence;
 
 			// Orbit
 			if (planet.referenceBody.name != planet.name)
@@ -69,14 +80,31 @@ namespace RandomizedSystems
 		public void RandomizeValues ()
 		{
 			name = Randomizer.GenerateName ();
+			if (planet.referenceBody.name != planet.name)
+			{
+				// Gravity expressed in terms of how many times Kerbin's gravity a planet is
+				float gravityMult = Randomizer.GenerateFloat (0.0f, 5.0f);
+				gravity = KERBIN_GRAVITY * gravityMult;
+				sphereOfInfluence = planet.Radius * 1.5;
+				if (orbitData.referenceBody.name != solarSystem.sun.name)
+				{
+					// Moon
+					sphereOfInfluence += (MUN_SOI * gravityMult);
+				}
+				else
+				{
+					// Planet
+					sphereOfInfluence += (KERBIN_SOI * gravityMult);
+				}
+			}
 			float value = Randomizer.GetValue ();
 			if (orbit != null)
 			{
 				orbitData = new OrbitData ();
 				#region Reference Body
 				PlanetData referenceData = null;
-				CelestialBody referenceBody = planet.referenceBody;
-				if (value >= 0.5f || solarSystem.planetCount <= 1 || childBodies.Count > 0)
+				referenceBody = planet.referenceBody;
+				if (value > 0.75f || solarSystem.planetCount <= 1 || childBodies.Count > 0 || planet.isHomeWorld)
 				{
 					referenceBody = solarSystem.sun;
 					referenceData = solarSystem.sunData;
@@ -91,7 +119,7 @@ namespace RandomizedSystems
 					// 2. The reference body is a moon
 					// 3. The reference body is smaller than us
 					// Move us to the sun after 100 attempts.
-					while ((referenceBody == planet || referenceBody.referenceBody != solarSystem.sun || referenceBody.Radius < planet.Radius))
+					while ((referenceBody == planet || referenceData.referenceBody != solarSystem.sun || referenceBody.Radius < planet.Radius))
 					{
 						attempts++;
 						int index = Randomizer.GenerateInt (0, solarSystem.planetCount);
@@ -115,25 +143,29 @@ namespace RandomizedSystems
 				#endregion
 				#region Inclination
 				int inclination = 0;
-				if (value >= 0.9f)
-				{
-					inclination = Randomizer.GenerateInt (0, 360);
-				}
-				else if (value >= 0.8f)
+				if (value >= 0.95f)
 				{
 					inclination = Randomizer.GenerateInt (0, 180);
 				}
-				else if (value >= 0.75f)
+				else if (value >= 0.925f)
 				{
-					inclination = Randomizer.GenerateInt (0, 90);
+					inclination = Randomizer.GenerateInt (0, 60);
 				}
-				else if (value >= 0.6f)
+				else if (value >= 0.875f)
 				{
-					inclination = Randomizer.GenerateInt (0, 45);
+					inclination = Randomizer.GenerateInt (0, 35);
 				}
-				else if (value >= 0.25f)
+				else if (value >= 0.825f)
+				{
+					inclination = Randomizer.GenerateInt (0, 25);
+				}
+				else if (value >= 0.5f)
 				{
 					inclination = Randomizer.GenerateInt (0, 10);
+				}
+				else
+				{
+					inclination = Randomizer.GenerateInt (0, 5);
 				}
 				orbitData.inclination = inclination;
 				#endregion
@@ -143,49 +175,58 @@ namespace RandomizedSystems
 				{
 					eccentricity = 0.99;
 				}
-				if (eccentricity <= 0.25)
-				{
-					eccentricity *= 0.1f;
-				}
-				else if (eccentricity <= 0.5)
-				{
-					eccentricity *= 0.25f;
-				}
-				else if (eccentricity <= 0.8)
+				if (eccentricity > 0.95)
 				{
 					eccentricity *= 0.5f;
 				}
 				else
 				{
-					eccentricity *= eccentricity;
+					if (eccentricity <= 0.25)
+					{
+						eccentricity *= 0.1f;
+					}
+					if (eccentricity <= 0.5)
+					{
+						eccentricity *= 0.25f;
+					}
+					if (eccentricity <= 0.8)
+					{
+						eccentricity *= 0.5f;
+					}
+					else
+					{
+						eccentricity *= eccentricity;
+					}
 				}
 				orbitData.eccentricity = eccentricity;
 				#endregion
 				#region Altitude
-				double periapsis = 1;
+				double semiMajorAxis = referenceData.sphereOfInfluence;
 				value = Randomizer.GetValue ();
 				if (value < 0.01f)
 				{
 					value = 0.01f;
 				}
-				float secondValue = Randomizer.GetValue ();
-				if (secondValue < 0.01f)
+				if (referenceBody.name == solarSystem.sun.name)
 				{
-					secondValue = 0.01f;
+					semiMajorAxis = MAX_SEMI_MAJOR_AXIS;
+					float secondValue = Randomizer.GetValue ();
+					if (secondValue < 0.01f)
+					{
+						secondValue = 0.01f;
+					}
+					semiMajorAxis *= value * secondValue;
 				}
-				periapsis = 25000000000 * value * secondValue;
-				if (referenceBody != solarSystem.sun)
+				else
 				{
-					// Not orbiting sun
-					periapsis *= 0.0001;
-					while (periapsis < referenceBody.Radius + referenceBody.atmosphereScaleHeight * 1000.0 * Mathf.Log(1000000.0f))
+					semiMajorAxis *= value;
+					while (semiMajorAxis < referenceBody.Radius + referenceBody.atmosphereScaleHeight * 1000.0 * Mathf.Log(1000000.0f))
 					{
 						// Inside planet's atmosphere
 						// This check might need to be moved to after we have already adjusted planets' atmosphere
-						periapsis *= 10.0f;
+						semiMajorAxis *= 2.0f;
 					}
 				}
-				double semiMajorAxis = periapsis;
 				if (eccentricity != 1.0f)
 				{
 					semiMajorAxis /= (1.0 - eccentricity);
@@ -210,6 +251,15 @@ namespace RandomizedSystems
 				}
 				orbitData.meanAnomalyAtEpoch = meanAnomalyAtEpoch;
 				#endregion
+				#region Period
+				orbitData.period = CalculateOrbitalPeriodFromSemimajorAxis (semiMajorAxis);
+				#endregion
+			}
+			else
+			{
+				referenceBody = solarSystem.sun;
+				orbitData = new OrbitData ();
+				orbitData.semiMajorAxis = 0;
 			}
 
 			// Randomize atmosphere
@@ -230,15 +280,18 @@ namespace RandomizedSystems
 				ambientColor = new Color (Randomizer.GetValue () * 0.5f, Randomizer.GetValue () * 0.5f, Randomizer.GetValue () * 0.5f);
 			}
 
-			// Gravity expressed in terms of how many times Kerbin's gravity a planet is
-			gravity = KERBIN_GRAVITY * Randomizer.GenerateFloat (0.0f, 10.0f);
-
+			value = Randomizer.GenerateFloat (0.0f, 30.0f);
+			rotationPeriod = value * 3600;
+			if (Randomizer.GetValue () < 0.10f)
+			{
+				rotationPeriod *= 30;
+			}
 			// Temperature measured by distance from sun
 			if (orbit != null)
 			{
-				float orbitHeight = (float)orbit.altitude / 250000000000.0f;
-				float inverseMult = 1.0f - orbitHeight;
-				tempMultiplier = 5.0f * inverseMult;
+				double orbitHeight = orbitData.semiMajorAxis / MAX_SEMI_MAJOR_AXIS;
+				double inverseMult = 1.0 - orbitHeight;
+				tempMultiplier = 5.0f * (float)inverseMult;
 			}
 		}
 
@@ -259,6 +312,11 @@ namespace RandomizedSystems
 			planet.pressureMultiplier = atmospherePressureMult;
 			planet.atmosphericAmbientColor = ambientColor;
 			planet.orbitingBodies = childBodies;
+			planet.rotationPeriod = rotationPeriod;
+			if (planet.referenceBody.name != planet.name)
+			{
+				planet.sphereOfInfluence = sphereOfInfluence;
+			}
 		}
 
 		private static Orbit CreateOrbit (OrbitData data, Orbit orbit)
@@ -269,8 +327,9 @@ namespace RandomizedSystems
 			                    data.longitudeAscendingNode, 
 			                    data.argumentOfPeriapsis, 
 			                    data.meanAnomalyAtEpoch, 
-			                    data.epoch, 
-			                    orbit, 
+			                    data.epoch,
+			                    data.period,
+			                    orbit,
 			                    data.referenceBody);
 		}
 
@@ -281,6 +340,7 @@ namespace RandomizedSystems
 		                                  double argumentOfPeriapsis, 
 		                                  double meanAnomalyAtEpoch, 
 		                                  double epoch, 
+		                                  double period,
 		                                  Orbit orbit,
 		                                  CelestialBody referenceBody)
 		{
@@ -342,6 +402,7 @@ namespace RandomizedSystems
 			orbit.argumentOfPeriapsis = argumentOfPeriapsis;
 			orbit.meanAnomalyAtEpoch = meanAnomalyAtEpoch;
 			orbit.epoch = epoch;
+			orbit.period = period;
 			return orbit;
 		}
 
@@ -357,6 +418,18 @@ namespace RandomizedSystems
 			data.referenceBody = orbit.referenceBody;
 			data.semiMajorAxis = orbit.semiMajorAxis;
 			return data;
+		}
+
+		private static double CalculateOrbitalPeriodFromSemimajorAxis (double semimajorAxis)
+		{
+			double kerbalAU = semimajorAxis / KERBAL_ASTRONOMICAL_UNIT;
+			// This formula produces a rough equivalent of the relationship between orbital periods and years on Earth
+			// Errors get higher as AU increases
+			double period = -0.114435 + (0.77734 * kerbalAU) + (0.337095 * (kerbalAU * kerbalAU));
+			// Time is in years, so a conversion to seconds is required
+			// Given time is 1 Kerbin year
+			period *= 9203545;
+			return period;
 		}
 	}
 }
