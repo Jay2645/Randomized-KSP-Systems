@@ -43,6 +43,8 @@
       <DeployService-Deploy>True</DeployService-Deploy>
     </Compile>
     <Compile Include="PlanetData.cs" />
+    <Compile Include="Hyperdrive.cs" />
+    <Compile Include="SolarData.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>

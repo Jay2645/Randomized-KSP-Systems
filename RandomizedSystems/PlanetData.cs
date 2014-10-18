@@ -6,15 +6,11 @@ namespace RandomizedSystems
 {
 	public class PlanetData
 	{
-		public static Dictionary<string, PlanetData> planetLookup = new Dictionary<string, PlanetData> ();
-		public static PlanetData sun;
+		public SolarData solarSystem;
 		public CelestialBody planet;
 		public string name;
 		public Orbit orbit;
 		private OrbitDriver orbitDriver;
-		public CelestialBody[] children;
-		public CelestialBody parent;
-		public PlanetData[] childData;
 		public bool hasAtmosphere = true;
 		public bool hasOxygen = true;
 		public double gravity = 0;
@@ -22,96 +18,84 @@ namespace RandomizedSystems
 		public double atmosphereHeight = 5;
 		public float atmospherePressureMult = 1.0f;
 		public Color ambientColor = Color.gray;
+		public int planetID = -1;
+		public List<CelestialBody> childBodies = new List<CelestialBody> ();
 		private const double KERBIN_GRAVITY = 3531600000000.0;
 
-		public PlanetData (CelestialBody planet)
+		public PlanetData (CelestialBody planet, SolarData system, int id)
 		{
+			this.planetID = id;
+			this.solarSystem = system;
 			this.planet = planet;
+			GetValues ();
+		}
+
+		private void GetValues ()
+		{
+			// General
 			name = planet.name;
+			gravity = planet.gravParameter;
+			tempMultiplier = planet.atmoshpereTemperatureMultiplier;
+
+			// Orbit
 			if (planet.referenceBody.name != planet.name)
 			{
-				parent = planet.referenceBody;
 				orbit = planet.GetOrbit ();
 				orbitDriver = planet.orbitDriver;
 			}
-			else
-			{
-				sun = this;
-			}
+
+			// Atmosphere
 			hasAtmosphere = planet.atmosphere;
 			hasOxygen = planet.atmosphereContainsOxygen;
-			gravity = planet.gravParameter;
-			tempMultiplier = planet.atmoshpereTemperatureMultiplier;
 			atmosphereHeight = planet.atmosphereScaleHeight;
 			ambientColor = planet.atmosphericAmbientColor;
 			atmospherePressureMult = planet.pressureMultiplier;
-
-			children = planet.orbitingBodies.ToArray ();
-			planetLookup.Add (planet.name, this);
-			List<PlanetData> orbitingBodies = new List<PlanetData> ();
-			foreach (CelestialBody child in children)
-			{
-				if (!planetLookup.ContainsKey (child.name))
-				{
-					orbitingBodies.Add (new PlanetData (child));
-				}
-			}
-			childData = orbitingBodies.ToArray ();
 		}
 
-		public void DebugPlanets ()
-		{
-			string debug = "I am " + planet.name;
-			if (children.Length > 0)
-			{
-				debug += " and I have " + children.Length + " children.";
-			}
-			else
-			{
-				debug += ".";
-			}
-			if (parent != null)
-			{
-				debug += " I orbit " + parent.name;
-			}
-			Debug.LogWarning (debug);
-			foreach (PlanetData data in childData)
-			{
-				data.DebugPlanets ();
-			}
-		}
-
-		public void RandomizeValues (bool childrenToo)
+		public void RandomizeValues ()
 		{
 			name = Randomizer.GenerateName ();
 			float value = Randomizer.GetValue ();
 			if (orbit != null)
 			{
 				#region Reference Body
+				PlanetData referenceData = null;
 				CelestialBody referenceBody = planet.referenceBody;
-				if (sun != null)
+				if (value >= 0.5f || solarSystem.planetCount <= 1 || childBodies.Count > 0)
 				{
-					value = Randomizer.GetValue ();
-					if (value >= 0.5f || planetLookup.Count <= 1)
+					referenceBody = solarSystem.sun;
+					referenceData = solarSystem.sunData;
+				}
+				else
+				{
+					referenceBody = planet;
+					List<int> attemptedInts = new List<int> ();
+					int attempts = 0;
+					// Toss out a candidate if any of the following is true:
+					// 1. The reference body is us (causes KSP to crash)
+					// 2. The reference body is a moon
+					// 3. The reference body is smaller than us
+					// Move us to the sun after 100 attempts.
+					while ((referenceBody == planet || referenceBody.referenceBody != solarSystem.sun || referenceBody.Radius < planet.Radius))
 					{
-						referenceBody = sun.planet;
-					}
-					else
-					{
-						referenceBody = planet;
-						int attempts = 0;
-						List<CelestialBody> allBodies = new List<CelestialBody> ();
-						foreach (KeyValuePair<string, PlanetData> kvp in planetLookup)
+						attempts++;
+						int index = Randomizer.GenerateInt (0, solarSystem.planetCount);
+						if (attemptedInts.Contains (index))
 						{
-							allBodies.Add (kvp.Value.planet);
+							continue;
 						}
-						while ((referenceBody == planet || referenceBody.referenceBody != sun.planet) && attempts < 100)
+						attemptedInts.Add (index);
+						referenceData = solarSystem.GetPlanetByID (index);
+						referenceBody = referenceData.planet;
+						if (attempts >= 100)
 						{
-							attempts++;
-							referenceBody = allBodies [Randomizer.GenerateInt (0, allBodies.Count)];
+							referenceBody = solarSystem.sun;
+							referenceData = solarSystem.sunData;
+							break;
 						}
 					}
 				}
+				solarSystem.AddChildToPlanet (referenceData.planetID, planet);
 				#endregion
 				#region Inclination
 				int inclination = 0;
@@ -172,13 +156,14 @@ namespace RandomizedSystems
 					secondValue = 0.01f;
 				}
 				periapsis = 250000000000 * value * secondValue;
-				if (referenceBody != sun.planet)
+				if (referenceBody != solarSystem.sun)
 				{
 					// Not orbiting sun
 					periapsis *= 0.0001;
 					while (periapsis < referenceBody.Radius + referenceBody.atmosphereScaleHeight * 1000.0 * Mathf.Log(1000000.0f))
 					{
 						// Inside planet's atmosphere
+						// This check might need to be moved to after we have already adjusted planets' atmosphere
 						periapsis *= 10.0f;
 					}
 				}
@@ -205,6 +190,8 @@ namespace RandomizedSystems
 				#endregion
 				orbit = CreateOrbit (inclination, eccentricity, semiMajorAxis, lan, argumentOfPeriapsis, meanAnomalyAtEpoch, Planetarium.GetUniversalTime (), orbit, referenceBody);
 			}
+
+			// Randomize atmosphere
 			value = Randomizer.GetValue ();
 			if (value >= 0.4f)
 			{
@@ -221,23 +208,20 @@ namespace RandomizedSystems
 				atmospherePressureMult = Randomizer.GenerateFloat (0.1f, 15.0f);
 				ambientColor = new Color (Randomizer.GetValue () * 0.5f, Randomizer.GetValue () * 0.5f, Randomizer.GetValue () * 0.5f);
 			}
-			gravity = KERBIN_GRAVITY * Randomizer.GenerateFloat (0.0f, 100.0f);
+
+			// Gravity expressed in terms of how many times Kerbin's gravity a planet is
+			gravity = KERBIN_GRAVITY * Randomizer.GenerateFloat (0.0f, 10.0f);
+
+			// Temperature measured by distance from sun
 			if (orbit != null)
 			{
 				float orbitHeight = (float)orbit.altitude / 250000000000.0f;
 				float inverseMult = 1.0f - orbitHeight;
 				tempMultiplier = 5.0f * inverseMult;
 			}
-			if (childrenToo)
-			{
-				foreach (PlanetData data in childData)
-				{
-					data.RandomizeValues (true);
-				}
-			}
 		}
 
-		public void ApplyChanges (bool childrenToo)
+		public void ApplyChanges ()
 		{
 			planet.bodyName = name;
 			if (orbitDriver != null)
@@ -252,14 +236,7 @@ namespace RandomizedSystems
 			planet.atmosphereScaleHeight = atmosphereHeight;
 			planet.pressureMultiplier = atmospherePressureMult;
 			planet.atmosphericAmbientColor = ambientColor;
-			planet.orbitingBodies = new List<CelestialBody> (children);
-			if (childrenToo)
-			{
-				foreach (PlanetData data in childData)
-				{
-					data.ApplyChanges (true);
-				}
-			}
+			planet.orbitingBodies = childBodies;
 		}
 
 		private static Orbit CreateOrbit (double inclination,
@@ -322,7 +299,6 @@ namespace RandomizedSystems
 					meanAnomalyAtEpoch -= Math.PI * 2;
 				}
 			}
-			//Orbit orbit = new Orbit ();
 			orbit.referenceBody = referenceBody;
 			orbit.inclination = inclination;
 			orbit.eccentricity = eccentricity;
@@ -332,7 +308,6 @@ namespace RandomizedSystems
 			orbit.meanAnomalyAtEpoch = meanAnomalyAtEpoch;
 			orbit.epoch = epoch;
 			return orbit;
-			//return new Orbit (inclination, eccentricity, semiMajorAxis, longitudeAscendingNode, argumentOfPeriapsis, meanAnomalyAtEpoch, epoch, planet);
 		}
 	}
 }
