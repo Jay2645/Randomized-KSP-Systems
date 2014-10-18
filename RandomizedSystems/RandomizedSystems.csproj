@@ -39,12 +39,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="PlanetNamer.cs">
-      <DeployService-Deploy>True</DeployService-Deploy>
-    </Compile>
     <Compile Include="PlanetData.cs" />
     <Compile Include="Hyperdrive.cs" />
     <Compile Include="SolarData.cs" />
+    <Compile Include="Randomizer.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>
