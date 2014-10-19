@@ -62,7 +62,7 @@ namespace RandomizedSystems
 			sphereOfInfluence = planet.sphereOfInfluence;
 
 			// Orbit
-			if (planet.referenceBody.name != planet.name)
+			if (!IsSun ())
 			{
 				orbit = planet.GetOrbit ();
 				orbitData = OrbitDataFromOrbit (orbit);
@@ -80,219 +80,9 @@ namespace RandomizedSystems
 		public void RandomizeValues ()
 		{
 			name = Randomizer.GenerateName ();
-			if (planet.referenceBody.name != planet.name)
-			{
-				// Gravity expressed in terms of how many times Kerbin's gravity a planet is
-				float gravityMult = Randomizer.GenerateFloat (0.0f, 5.0f);
-				gravity = KERBIN_GRAVITY * gravityMult;
-				sphereOfInfluence = planet.Radius * 1.5;
-				if (orbitData.referenceBody.name != solarSystem.sun.name)
-				{
-					// Moon
-					sphereOfInfluence += (MUN_SOI * gravityMult);
-				}
-				else
-				{
-					// Planet
-					sphereOfInfluence += (KERBIN_SOI * gravityMult);
-				}
-			}
-			float value = Randomizer.GetValue ();
-			if (orbit != null)
-			{
-				orbitData = new OrbitData ();
-				#region Reference Body
-				PlanetData referenceData = null;
-				referenceBody = planet.referenceBody;
-				if (value > 0.75f || solarSystem.planetCount <= 1 || childBodies.Count > 0 || planet.isHomeWorld)
-				{
-					referenceBody = solarSystem.sun;
-					referenceData = solarSystem.sunData;
-				}
-				else
-				{
-					referenceBody = planet;
-					List<int> attemptedInts = new List<int> ();
-					int attempts = 0;
-					// Toss out a candidate if any of the following is true:
-					// 1. The reference body is us (causes KSP to crash)
-					// 2. The reference body is a moon
-					// 3. The reference body is smaller than us
-					// Move us to the sun after 100 attempts.
-					while ((referenceBody == planet || referenceData.referenceBody != solarSystem.sun || referenceBody.Radius < planet.Radius))
-					{
-						attempts++;
-						int index = Randomizer.GenerateInt (0, solarSystem.planetCount);
-						if (attemptedInts.Contains (index))
-						{
-							continue;
-						}
-						attemptedInts.Add (index);
-						referenceData = solarSystem.GetPlanetByID (index);
-						referenceBody = referenceData.planet;
-						if (attempts >= 100)
-						{
-							referenceBody = solarSystem.sun;
-							referenceData = solarSystem.sunData;
-							break;
-						}
-					}
-				}
-				solarSystem.AddChildToPlanet (referenceData.planetID, planet);
-				orbitData.referenceBody = referenceBody;
-				#endregion
-				#region Inclination
-				int inclination = 0;
-				if (value >= 0.95f)
-				{
-					inclination = Randomizer.GenerateInt (0, 180);
-				}
-				else if (value >= 0.925f)
-				{
-					inclination = Randomizer.GenerateInt (0, 60);
-				}
-				else if (value >= 0.875f)
-				{
-					inclination = Randomizer.GenerateInt (0, 35);
-				}
-				else if (value >= 0.825f)
-				{
-					inclination = Randomizer.GenerateInt (0, 25);
-				}
-				else if (value >= 0.5f)
-				{
-					inclination = Randomizer.GenerateInt (0, 10);
-				}
-				else
-				{
-					inclination = Randomizer.GenerateInt (0, 5);
-				}
-				orbitData.inclination = inclination;
-				#endregion
-				#region Eccentricity
-				double eccentricity = Randomizer.GetValue ();
-				if (eccentricity == 1)
-				{
-					eccentricity = 0.99;
-				}
-				if (eccentricity > 0.95)
-				{
-					eccentricity *= 0.5f;
-				}
-				else
-				{
-					if (eccentricity <= 0.25)
-					{
-						eccentricity *= 0.1f;
-					}
-					if (eccentricity <= 0.5)
-					{
-						eccentricity *= 0.25f;
-					}
-					if (eccentricity <= 0.8)
-					{
-						eccentricity *= 0.5f;
-					}
-					else
-					{
-						eccentricity *= eccentricity;
-					}
-				}
-				orbitData.eccentricity = eccentricity;
-				#endregion
-				#region Altitude
-				double semiMajorAxis = referenceData.sphereOfInfluence;
-				value = Randomizer.GetValue ();
-				if (value < 0.01f)
-				{
-					value = 0.01f;
-				}
-				if (referenceBody.name == solarSystem.sun.name)
-				{
-					semiMajorAxis = MAX_SEMI_MAJOR_AXIS;
-					float secondValue = Randomizer.GetValue ();
-					if (secondValue < 0.01f)
-					{
-						secondValue = 0.01f;
-					}
-					semiMajorAxis *= value * secondValue;
-				}
-				else
-				{
-					semiMajorAxis *= value;
-					while (semiMajorAxis < referenceBody.Radius + referenceBody.atmosphereScaleHeight * 1000.0 * Mathf.Log(1000000.0f))
-					{
-						// Inside planet's atmosphere
-						// This check might need to be moved to after we have already adjusted planets' atmosphere
-						semiMajorAxis *= 2.0f;
-					}
-				}
-				if (eccentricity != 1.0f)
-				{
-					semiMajorAxis /= (1.0 - eccentricity);
-				}
-				orbitData.semiMajorAxis = semiMajorAxis;
-				#endregion
-				#region Longitude Ascending Node
-				int lan = Randomizer.GenerateInt (0, 360);
-				orbitData.longitudeAscendingNode = lan;
-				#endregion
-				#region Argument Of Periapsis
-				int argumentOfPeriapsis = Randomizer.GenerateInt (0, 360);
-				orbitData.argumentOfPeriapsis = argumentOfPeriapsis;
-				#endregion
-				#region Mean Anomaly at Epoch
-				float meanAnomalyAtEpoch = Randomizer.GenerateFloat (0.0f, Mathf.PI * 2.0f);
-				if (semiMajorAxis < 0)
-				{
-					meanAnomalyAtEpoch /= Mathf.PI;
-					meanAnomalyAtEpoch -= 1.0f;
-					meanAnomalyAtEpoch *= 5.0f;
-				}
-				orbitData.meanAnomalyAtEpoch = meanAnomalyAtEpoch;
-				#endregion
-				#region Period
-				orbitData.period = CalculateOrbitalPeriodFromSemimajorAxis (semiMajorAxis);
-				#endregion
-			}
-			else
-			{
-				referenceBody = solarSystem.sun;
-				orbitData = new OrbitData ();
-				orbitData.semiMajorAxis = 0;
-			}
-
-			// Randomize atmosphere
-			value = Randomizer.GetValue ();
-			if (value >= 0.4f)
-			{
-				hasAtmosphere = true;
-			}
-			if (hasAtmosphere)
-			{
-				value = Randomizer.GetValue ();
-				if (value >= 0.75f)
-				{
-					hasOxygen = true;
-				}
-				atmosphereHeight = Randomizer.GenerateInt (1, 10);
-				atmospherePressureMult = Randomizer.GenerateFloat (0.1f, 15.0f);
-				ambientColor = new Color (Randomizer.GetValue () * 0.5f, Randomizer.GetValue () * 0.5f, Randomizer.GetValue () * 0.5f);
-			}
-
-			value = Randomizer.GenerateFloat (0.0f, 30.0f);
-			rotationPeriod = value * 3600;
-			if (Randomizer.GetValue () < 0.10f)
-			{
-				rotationPeriod *= 30;
-			}
-			// Temperature measured by distance from sun
-			if (orbit != null)
-			{
-				double orbitHeight = orbitData.semiMajorAxis / MAX_SEMI_MAJOR_AXIS;
-				double inverseMult = 1.0 - orbitHeight;
-				tempMultiplier = 5.0f * (float)inverseMult;
-			}
+			CreateOrbit ();
+			CreateAtmosphere ();
+			CreateCharacteristics ();
 		}
 
 		public void ApplyChanges ()
@@ -313,10 +103,306 @@ namespace RandomizedSystems
 			planet.atmosphericAmbientColor = ambientColor;
 			planet.orbitingBodies = childBodies;
 			planet.rotationPeriod = rotationPeriod;
-			if (planet.referenceBody.name != planet.name)
+			if (!IsSun ())
 			{
 				planet.sphereOfInfluence = sphereOfInfluence;
 			}
+		}
+
+		private void CreateOrbit ()
+		{
+			float value = Randomizer.GetValue ();
+			orbitData = new OrbitData ();
+			#region Reference Body
+			if (orbit == null)
+			{
+				// Special case: Sun
+				referenceBody = solarSystem.sun;
+				orbitData.semiMajorAxis = 0;
+				return;
+			}
+			PlanetData referenceData = null;
+			referenceBody = null;
+			// Planet is in a solar orbit if any of these are true:
+			// 1. RNG rolls a value above at or below 0.25 (25% chance)
+			// 2. There is only one planet in the solar system (should never happen).
+			// 3. We already have a moon orbiting us (no moons orbiting other moons)
+			if (value <= 0.25f || solarSystem.planetCount <= 1 || childBodies.Count > 0)
+			{
+				referenceBody = solarSystem.sun;
+				referenceData = solarSystem.sunData;
+			}
+			else
+			{
+				// We will be a moon
+				List<int> attemptedInts = new List<int> ();
+				int attempts = 0;
+				// Toss out a candidate if any of the following is true:
+				// 1. The reference body is null or us (causes KSP to crash)
+				// 2. The reference body is a moon
+				// 3. The reference body is smaller than us
+				// Move us to solar orbit after 100 attempts.
+				while ((referenceBody == null || referenceBody == planet || referenceData.referenceBody != solarSystem.sun || referenceBody.Radius < planet.Radius))
+				{
+					attempts++;
+					// Keep track of already-attempted planets
+					// Might change this to pull a list of all planets from the solar system and poll that
+					int index = Randomizer.GenerateInt (0, solarSystem.planetCount);
+					if (attemptedInts.Contains (index))
+					{
+						continue;
+					}
+					attemptedInts.Add (index);
+					// Get the planet dictated by the random int
+					referenceData = solarSystem.GetPlanetByID (index);
+					referenceBody = referenceData.planet;
+					if (attempts >= 100)
+					{
+						referenceBody = solarSystem.sun;
+						referenceData = solarSystem.sunData;
+						break;
+					}
+					// Loop will do a logic check to make sure the chosen planet is valid
+					// Will continue iterating until we have found a valid planet
+				}
+			}
+			// Notify the solar system and the planet itself that our reference body has a new body orbiting it
+			solarSystem.AddChildToPlanet (referenceData.planetID, planet);
+			// Update orbital data
+			orbitData.referenceBody = referenceBody;
+			#endregion
+			#region Inclination
+			// Inclination starts directly at orbital plane
+			int inclination = 0;
+			// Get new random value
+			value = Randomizer.GetValue ();
+			if (value >= 0.975f)
+			{
+				// 2.5% chance of orbit being between 0 and 180 degrees
+				inclination = Randomizer.GenerateInt (0, 180);
+			}
+			else if (value >= 0.95f)
+			{
+				// 2.5% chance of orbit being between 0 and 60 degrees
+				inclination = Randomizer.GenerateInt (0, 60);
+			}
+			else if (value >= 0.925f)
+			{
+				// 2.5% chance of orbit being between 0 and 45 degrees
+				inclination = Randomizer.GenerateInt (0, 45);
+			}
+			else if (value >= 0.9f)
+			{
+				// 2.5% chance or orbit being between 0 and 25 degrees
+				inclination = Randomizer.GenerateInt (0, 25);
+			}
+			else if (value >= 0.6f)
+			{
+				// 30% chance of orbit being between 0 and 10 degrees
+				inclination = Randomizer.GenerateInt (0, 10);
+			}
+			else if (value > 0.1f)
+			{
+				// 50% chance of orbit being between 0 and 5 degrees
+				inclination = Randomizer.GenerateInt (0, 5);
+			}
+			else
+			{
+				// 10% chance of a 0 inclination orbit
+				inclination = 0;
+			}
+			orbitData.inclination = inclination;
+			#endregion
+			#region Eccentricity
+			// Eccentricity must be a value between 0 and 0.99
+			double eccentricity = Randomizer.GetValue ();
+			if (eccentricity == 1)
+			{
+				eccentricity = 0.99;
+			}
+			// For extreme values of eccentricity, tone it down a bit so planets don't buzz the sun so much
+			if (eccentricity > 0.95)
+			{
+				eccentricity *= 0.5f;
+			}
+			else
+			{
+				// Below 0.25 eccentricity is ignored
+				if (eccentricity <= 0.25)
+				{
+					// Values above 0.25 are toned down by 10% to keep orbits circlular
+					eccentricity -= (eccentricity * 0.1f);
+				}
+				if (eccentricity <= 0.5)
+				{
+					// Values above 0.8 after being toned down are toned down by 25%
+					eccentricity -= (eccentricity * 0.25f);
+				}
+				if (eccentricity <= 0.8)
+				{
+					// If values are *still* above 0.8, cut in half
+					eccentricity *= 0.5f;
+				}
+				else
+				{
+					// Square resulting eccentricity to make orbits slightly more circular
+					eccentricity *= eccentricity;
+				}
+				if (eccentricity < 0)
+				{
+					// Should never happen
+					eccentricity = 0;
+				}
+			}
+			orbitData.eccentricity = eccentricity;
+			#endregion
+			#region Gravity
+			// Gravity expressed in terms of how many times Kerbin's gravity a planet is
+			// Can be anywhere from 0-5 times Kerbin's gravity
+			// Might bias this to allow for more low-gravity planets
+			float gravityMult = Randomizer.GenerateFloat (0.0f, 5.0f);
+			gravity = KERBIN_GRAVITY * gravityMult;
+			// Sphere of influence is at least 1.5 times the radius of the planet body
+			sphereOfInfluence = planet.Radius * 1.5;
+			if (referenceData.IsSun ())
+			{
+				// Planet
+				// Sphere of Influence is modified by Kerbin's SOI and the gravity of our body
+				sphereOfInfluence += (KERBIN_SOI * gravityMult);
+			}
+			else
+			{
+				// Moon
+				// Sphere of Influence is modified by the Mun's SOI and the gravity of our body
+				sphereOfInfluence += (MUN_SOI * gravityMult);
+				if (sphereOfInfluence * 2 > referenceData.sphereOfInfluence)
+				{
+					// Our parent body must have at least double our influence
+					float sphereMult = Randomizer.GenerateFloat (0.1f, 0.5f);
+					// There is still a minimum of our radius * 1.5, however
+					sphereOfInfluence = referenceData.sphereOfInfluence * sphereMult;
+					if (sphereOfInfluence < planet.Radius * 1.5)
+					{
+						sphereOfInfluence = planet.Radius * 1.5;
+						// Parent body must now have at minimum double that value as its SOI
+						double parentSOI = sphereOfInfluence * Randomizer.GenerateFloat (2.0f, 3.0f);
+						solarSystem.AdjustPlanetSOI (referenceData.planetID, parentSOI);
+						// Gravity must also reflect this
+						// Remove the parent's radius from the SOI calculations
+						parentSOI -= referenceData.planet.Radius * 1.5;
+						// New gravity multiplier is based on how much stronger this is than Kerbin's SOI
+						double parentGravityMult = parentSOI / KERBIN_SOI;
+						solarSystem.AdjustPlanetGravity (referenceData.planetID, KERBIN_GRAVITY * parentGravityMult);
+					}
+				}
+			}
+			#endregion
+			#region Altitude
+			value = Randomizer.GetValue ();
+			// Floor resulting value at 1%, to be used later
+			if (value < 0.01f)
+			{
+				value = 0.01f;
+			}
+			// Max Semi-Major Axis is based on sphere of influence of parent body
+			double semiMajorAxis = referenceData.sphereOfInfluence;
+			if (referenceData.IsSun ())
+			{
+				// Special case: parent is sun
+				semiMajorAxis = MAX_SEMI_MAJOR_AXIS;
+				// Determine second random value
+				float secondValue = Randomizer.GetValue ();
+				if (secondValue < 0.01f)
+				{
+					secondValue = 0.01f;
+				}
+				// Orbit can be anywhere between the max semi-major axis of the sun and 0.01% of the semi-major axis
+				semiMajorAxis *= value * secondValue;
+			}
+			else
+			{
+				// Planet is moon
+				// Semi-Major Axis can be anywhere within the sphere of influence of parent body
+				semiMajorAxis *= value;
+				while (semiMajorAxis < referenceBody.Radius + referenceBody.atmosphereScaleHeight * 1000.0 * Mathf.Log(1000000.0f))
+				{
+					// Inside planet's atmosphere
+					// This check might need to be moved to after we have already adjusted planets' atmosphere
+					semiMajorAxis *= 2.0f;
+				}
+			}
+			// Remove eccentricity from the semi-major axis
+			if (eccentricity != 1.0f)
+			{
+				semiMajorAxis /= (1.0 - eccentricity);
+			}
+			orbitData.semiMajorAxis = semiMajorAxis;
+			#endregion
+			#region Longitude Ascending Node
+			int lan = Randomizer.GenerateInt (0, 360);
+			orbitData.longitudeAscendingNode = lan;
+			#endregion
+			#region Argument Of Periapsis
+			int argumentOfPeriapsis = Randomizer.GenerateInt (0, 360);
+			orbitData.argumentOfPeriapsis = argumentOfPeriapsis;
+			#endregion
+			#region Mean Anomaly at Epoch
+			float meanAnomalyAtEpoch = Randomizer.GenerateFloat (0.0f, Mathf.PI * 2.0f);
+			if (semiMajorAxis < 0)
+			{
+				meanAnomalyAtEpoch /= Mathf.PI;
+				meanAnomalyAtEpoch -= 1.0f;
+				meanAnomalyAtEpoch *= 5.0f;
+			}
+			orbitData.meanAnomalyAtEpoch = meanAnomalyAtEpoch;
+			#endregion
+			#region Period
+			orbitData.period = CalculateOrbitalPeriodFromSemimajorAxis (semiMajorAxis);
+			#endregion
+		}
+
+		private void CreateAtmosphere ()
+		{
+			// Randomize atmosphere
+			float value = Randomizer.GetValue ();
+			if (value >= 0.4f)
+			{
+				hasAtmosphere = true;
+			}
+			if (hasAtmosphere)
+			{
+				value = Randomizer.GetValue ();
+				if (value >= 0.75f)
+				{
+					hasOxygen = true;
+				}
+				atmosphereHeight = Randomizer.GenerateInt (1, 10);
+				atmospherePressureMult = Randomizer.GenerateFloat (0.1f, 15.0f);
+				ambientColor = new Color (Randomizer.GetValue () * 0.5f, Randomizer.GetValue () * 0.5f, Randomizer.GetValue () * 0.5f);
+			}
+		}
+
+		private void CreateCharacteristics ()
+		{
+			float value = Randomizer.GenerateFloat (0.0f, 30.0f);
+			rotationPeriod = value * 3600;
+			if (Randomizer.GetValue () < 0.10f)
+			{
+				rotationPeriod *= 30;
+			}
+			// Temperature measured by distance from sun
+			if (orbit != null)
+			{
+				double orbitHeight = orbitData.semiMajorAxis / MAX_SEMI_MAJOR_AXIS;
+				double inverseMult = 1.0 - orbitHeight;
+				tempMultiplier = 5.0f * (float)inverseMult;
+			}
+		}
+
+		public bool IsSun ()
+		{
+			// The sun orbits itself
+			return planet.referenceBody.name == planet.name;
 		}
 
 		private static Orbit CreateOrbit (OrbitData data, Orbit orbit)

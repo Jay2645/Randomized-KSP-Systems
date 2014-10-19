@@ -183,6 +183,30 @@ namespace RandomizedSystems
 			}
 		}
 
+		public void AdjustPlanetSOI (int planetID, double newSOI)
+		{
+			if (planetID < solarSystem.Count)
+			{
+				solarSystem [planetID].sphereOfInfluence = newSOI;
+			}
+			else
+			{
+				Debug.LogError (planetID + " does not match up with any planet!");
+			}
+		}
+
+		public void AdjustPlanetGravity (int planetID, double newGravity)
+		{
+			if (planetID < solarSystem.Count)
+			{
+				solarSystem [planetID].gravity = newGravity;
+			}
+			else
+			{
+				Debug.LogError (planetID + " does not match up with any planet!");
+			}
+		}
+
 		public static SolarData CreateSystem (string seed)
 		{
 			SolarData solarSystem = null;

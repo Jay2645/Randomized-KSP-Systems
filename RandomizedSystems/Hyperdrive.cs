@@ -58,6 +58,7 @@ namespace RandomizedSystems
 				seed += (int)c;
 			}
 			SolarData.CreateSystem (seedString);
+			Debug.LogWarning ("Created system from string " + seedString + ". Seed value: " + seed);
 			ScreenMessages.PostScreenMessage ("Warp Drive initialized. Traveling to coordinates " + seedString + ".", 3.0f, ScreenMessageStyle.UPPER_CENTER);
 		}
 	}
