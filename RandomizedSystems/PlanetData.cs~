@@ -8,6 +8,7 @@ namespace RandomizedSystems
 	{
 		public SolarData solarSystem;
 		public CelestialBody referenceBody;
+		public PlanetData referenceBodyData;
 		public CelestialBody planet;
 		public string name;
 		public Orbit orbit;
@@ -24,6 +25,7 @@ namespace RandomizedSystems
 		public Color ambientColor = Color.gray;
 		public int planetID = -1;
 		public List<CelestialBody> childBodies = new List<CelestialBody> ();
+		public List<int> childDataIDs = new List<int> ();
 		private const double KERBIN_GRAVITY = 3531600000000.0;
 		private const double KERBAL_ASTRONOMICAL_UNIT = 13599840256;
 		private const double KERBIN_SOI = 84159286.0;
@@ -87,25 +89,46 @@ namespace RandomizedSystems
 
 		public void ApplyChanges ()
 		{
+			Debug.LogWarning ("Planet: " + name);
 			planet.bodyName = name;
+			if (IsSun ())
+			{
+				Debug.LogWarning ("Star");
+			}
+			else
+			{
+				Debug.Log ("Gravity: " + (gravity / KERBIN_GRAVITY) + " times Kerbin gravity.");
+				planet.gravParameter = gravity;
+			}
+			Debug.Log ("Atmosphere: " + hasAtmosphere);
+			if (hasAtmosphere)
+			{
+				Debug.Log ("Oxygen: " + hasOxygen);
+				Debug.Log ("Atmosphere height: " + (atmosphereHeight * Mathf.Log (1000000.0f)) + " kilometers.");
+				Debug.Log ("Pressure multiplier: " + atmospherePressureMult);
+				Debug.Log ("Temperature multiplier: " + tempMultiplier);
+				Debug.Log ("Ambient color: " + ambientColor);
+			}
+			planet.atmosphere = hasAtmosphere;
+			planet.atmosphereContainsOxygen = hasOxygen;
+			planet.atmoshpereTemperatureMultiplier = tempMultiplier;
+			planet.atmosphereScaleHeight = atmosphereHeight;
+			planet.pressureMultiplier = atmospherePressureMult;
+			planet.atmosphericAmbientColor = ambientColor;
+			if (!IsSun ())
+			{
+				Debug.Log ("Sphere of influence: " + sphereOfInfluence + " meters (" + (sphereOfInfluence / KERBIN_SOI) + " times Kerbin SOI)");
+				planet.sphereOfInfluence = sphereOfInfluence;
+			}
+			Debug.Log ("Rotation period: " + rotationPeriod + " seconds per rotation (" +
+				(rotationPeriod / 60) + " minutes, " + ((rotationPeriod / 60) / 60) + " hours)");
+			planet.rotationPeriod = rotationPeriod;
+			planet.orbitingBodies = childBodies;
 			if (orbitDriver != null)
 			{
 				orbit = CreateOrbit (orbitData, orbit);
 				orbitDriver.orbit = orbit;
 				orbitDriver.UpdateOrbit ();
-			}
-			planet.atmosphere = hasAtmosphere;
-			planet.atmosphereContainsOxygen = hasOxygen;
-			planet.gravParameter = gravity;
-			planet.atmoshpereTemperatureMultiplier = tempMultiplier;
-			planet.atmosphereScaleHeight = atmosphereHeight;
-			planet.pressureMultiplier = atmospherePressureMult;
-			planet.atmosphericAmbientColor = ambientColor;
-			planet.orbitingBodies = childBodies;
-			planet.rotationPeriod = rotationPeriod;
-			if (!IsSun ())
-			{
-				planet.sphereOfInfluence = sphereOfInfluence;
 			}
 		}
 
@@ -121,7 +144,7 @@ namespace RandomizedSystems
 				orbitData.semiMajorAxis = 0;
 				return;
 			}
-			PlanetData referenceData = null;
+			referenceBodyData = null;
 			referenceBody = null;
 			// Planet is in a solar orbit if any of these are true:
 			// 1. RNG rolls a value above at or below 0.25 (25% chance)
@@ -130,7 +153,7 @@ namespace RandomizedSystems
 			if (value <= 0.25f || solarSystem.planetCount <= 1 || childBodies.Count > 0)
 			{
 				referenceBody = solarSystem.sun;
-				referenceData = solarSystem.sunData;
+				referenceBodyData = solarSystem.sunData;
 			}
 			else
 			{
@@ -142,7 +165,7 @@ namespace RandomizedSystems
 				// 2. The reference body is a moon
 				// 3. The reference body is smaller than us
 				// Move us to solar orbit after 100 attempts.
-				while ((referenceBody == null || referenceBody == planet || referenceData.referenceBody != solarSystem.sun || referenceBody.Radius < planet.Radius))
+				while ((referenceBody == null || referenceBody == planet || referenceBodyData.referenceBody != solarSystem.sun || referenceBody.Radius < planet.Radius))
 				{
 					attempts++;
 					// Keep track of already-attempted planets
@@ -154,12 +177,12 @@ namespace RandomizedSystems
 					}
 					attemptedInts.Add (index);
 					// Get the planet dictated by the random int
-					referenceData = solarSystem.GetPlanetByID (index);
-					referenceBody = referenceData.planet;
+					referenceBodyData = solarSystem.GetPlanetByID (index);
+					referenceBody = referenceBodyData.planet;
 					if (attempts >= 100)
 					{
 						referenceBody = solarSystem.sun;
-						referenceData = solarSystem.sunData;
+						referenceBodyData = solarSystem.sunData;
 						break;
 					}
 					// Loop will do a logic check to make sure the chosen planet is valid
@@ -167,7 +190,7 @@ namespace RandomizedSystems
 				}
 			}
 			// Notify the solar system and the planet itself that our reference body has a new body orbiting it
-			solarSystem.AddChildToPlanet (referenceData.planetID, planet);
+			solarSystem.AddChildToPlanet (referenceBodyData.planetID, planet);
 			// Update orbital data
 			orbitData.referenceBody = referenceBody;
 			#endregion
@@ -257,45 +280,28 @@ namespace RandomizedSystems
 			orbitData.eccentricity = eccentricity;
 			#endregion
 			#region Gravity
-			// Gravity expressed in terms of how many times Kerbin's gravity a planet is
-			// Can be anywhere from 0-5 times Kerbin's gravity
-			// Might bias this to allow for more low-gravity planets
-			float gravityMult = Randomizer.GenerateFloat (0.0f, 5.0f);
-			gravity = KERBIN_GRAVITY * gravityMult;
-			// Sphere of influence is at least 1.5 times the radius of the planet body
-			sphereOfInfluence = planet.Radius * 1.5;
-			if (referenceData.IsSun ())
+			float gravityMult = 0.0f;
+			if (IsMoon ())
 			{
-				// Planet
-				// Sphere of Influence is modified by Kerbin's SOI and the gravity of our body
-				sphereOfInfluence += (KERBIN_SOI * gravityMult);
+				// Moons in KSP for the most part have SOIs which are greater than their real-life counterparts
+				// SOI -> Gravity is not a 1:1 ratio; instead a moon's SOI is usually 7-8 times more powerful than its gravity
+				// To skew the gravity data for moons, we use the formula y = (0.0788628 * x^2)-(0.788279 * x)+1.58089
+				// Note that values below 7.25 generate negative multipliers
+				float randomGravity = Randomizer.GenerateFloat (7.25f, 9f);
+				gravityMult = (0.0788628f * randomGravity * randomGravity) - (0.788279f * randomGravity) + 1.58089f;
 			}
 			else
 			{
-				// Moon
-				// Sphere of Influence is modified by the Mun's SOI and the gravity of our body
-				sphereOfInfluence += (MUN_SOI * gravityMult);
-				if (sphereOfInfluence * 2 > referenceData.sphereOfInfluence)
+				gravityMult = Randomizer.GenerateFloat (0.15f, 2.0f);
+				value = Randomizer.GetValue ();
+				// There is a chance that a planet is a gas giant like Jool
+				if (value <= 0.05f)
 				{
-					// Our parent body must have at least double our influence
-					float sphereMult = Randomizer.GenerateFloat (0.1f, 0.5f);
-					// There is still a minimum of our radius * 1.5, however
-					sphereOfInfluence = referenceData.sphereOfInfluence * sphereMult;
-					if (sphereOfInfluence < planet.Radius * 1.5)
-					{
-						sphereOfInfluence = planet.Radius * 1.5;
-						// Parent body must now have at minimum double that value as its SOI
-						double parentSOI = sphereOfInfluence * Randomizer.GenerateFloat (2.0f, 3.0f);
-						solarSystem.AdjustPlanetSOI (referenceData.planetID, parentSOI);
-						// Gravity must also reflect this
-						// Remove the parent's radius from the SOI calculations
-						parentSOI -= referenceData.planet.Radius * 1.5;
-						// New gravity multiplier is based on how much stronger this is than Kerbin's SOI
-						double parentGravityMult = parentSOI / KERBIN_SOI;
-						solarSystem.AdjustPlanetGravity (referenceData.planetID, KERBIN_GRAVITY * parentGravityMult);
-					}
+					gravityMult *= 20.0f;
 				}
 			}
+			gravity = gravityMult * KERBIN_GRAVITY;
+			sphereOfInfluence = CalculateSOIFromGravity (gravityMult);
 			#endregion
 			#region Altitude
 			value = Randomizer.GetValue ();
@@ -305,17 +311,13 @@ namespace RandomizedSystems
 				value = 0.01f;
 			}
 			// Max Semi-Major Axis is based on sphere of influence of parent body
-			double semiMajorAxis = referenceData.sphereOfInfluence;
-			if (referenceData.IsSun ())
+			double semiMajorAxis = referenceBodyData.sphereOfInfluence;
+			if (referenceBodyData.IsSun ())
 			{
 				// Special case: parent is sun
 				semiMajorAxis = MAX_SEMI_MAJOR_AXIS;
 				// Determine second random value
 				float secondValue = Randomizer.GetValue ();
-				if (secondValue < 0.01f)
-				{
-					secondValue = 0.01f;
-				}
 				// Orbit can be anywhere between the max semi-major axis of the sun and 0.01% of the semi-major axis
 				semiMajorAxis *= value * secondValue;
 			}
@@ -323,12 +325,44 @@ namespace RandomizedSystems
 			{
 				// Planet is moon
 				// Semi-Major Axis can be anywhere within the sphere of influence of parent body
-				semiMajorAxis *= value;
-				while (semiMajorAxis < referenceBody.Radius + referenceBody.atmosphereScaleHeight * 1000.0 * Mathf.Log(1000000.0f))
+				double tempMajorAxis = semiMajorAxis;
+				double parentAtmosphereHeight = planet.Radius + referenceBody.Radius + (referenceBody.atmosphereScaleHeight * 1000.0 * Mathf.Log (1000000.0f));
+				int attempts = 0;
+				while (tempMajorAxis < parentAtmosphereHeight && attempts < 500)
 				{
+					attempts++;
+					//tempMajorAxis *= 2;
 					// Inside planet's atmosphere
-					// This check might need to be moved to after we have already adjusted planets' atmosphere
-					semiMajorAxis *= 2.0f;
+					value += Randomizer.GenerateFloat (0.01f, 0.4f);
+					tempMajorAxis = semiMajorAxis * value;
+					foreach (int id in referenceBodyData.childDataIDs)
+					{
+						// This ensures we do not crash into other planets
+						PlanetData childData = solarSystem.GetPlanetByID (id);
+						double moonAxis = childData.orbitData.semiMajorAxis;
+						double moonMin = moonAxis - childData.planet.Radius;
+						double moonMax = moonAxis + childData.planet.Radius;
+						int childAttempts = 0;
+						while (tempMajorAxis + planet.Radius >= moonMin && tempMajorAxis <= moonMax && childAttempts < 500)
+						{
+							childAttempts++;
+							value += Randomizer.GenerateFloat (0.01f, 0.4f);
+							tempMajorAxis = semiMajorAxis * value;
+							if (childAttempts == 500)
+							{
+								Debug.LogWarning ("Attempts to move Semi-Major Axis out of the way of a child exceeded for " + planet.name);
+							}
+						}
+					}
+					if (attempts == 500)
+					{
+						Debug.LogWarning ("Attempts to move Semi-Major Axis exceeded for " + planet.name);
+					}
+				}
+				semiMajorAxis = tempMajorAxis;
+				if (semiMajorAxis <= 0)
+				{
+					Debug.LogError ("Semi-Major axis for " + planet.name + " is " + semiMajorAxis);
 				}
 			}
 			// Remove eccentricity from the semi-major axis
@@ -365,20 +399,22 @@ namespace RandomizedSystems
 		{
 			// Randomize atmosphere
 			float value = Randomizer.GetValue ();
-			if (value >= 0.4f)
+			// Atmosphere has a 75% chance of being generated if we are a planet
+			// Atmosphere has a 10% chance of being generated if we are a moon
+			if (value >= 0.25f && IsSun (referenceBody) || value <= 0.1f)
 			{
 				hasAtmosphere = true;
 			}
 			if (hasAtmosphere)
 			{
 				value = Randomizer.GetValue ();
-				if (value >= 0.75f)
+				if (value >= 0.9f)
 				{
 					hasOxygen = true;
 				}
 				atmosphereHeight = Randomizer.GenerateInt (1, 10);
 				atmospherePressureMult = Randomizer.GenerateFloat (0.1f, 15.0f);
-				ambientColor = new Color (Randomizer.GetValue () * 0.5f, Randomizer.GetValue () * 0.5f, Randomizer.GetValue () * 0.5f);
+				ambientColor = new Color (Randomizer.GetValue () * 0.25f, Randomizer.GetValue () * 0.25f, Randomizer.GetValue () * 0.25f);
 			}
 		}
 
@@ -403,6 +439,17 @@ namespace RandomizedSystems
 		{
 			// The sun orbits itself
 			return planet.referenceBody.name == planet.name;
+		}
+
+		public bool IsMoon ()
+		{
+			// If our reference body is *not* the sun, we are a moon
+			return referenceBody.name != solarSystem.sun.name;
+		}
+
+		private static bool IsSun (CelestialBody potentialSun)
+		{
+			return potentialSun.referenceBody.name == potentialSun.name;
 		}
 
 		private static Orbit CreateOrbit (OrbitData data, Orbit orbit)
@@ -492,17 +539,94 @@ namespace RandomizedSystems
 			return orbit;
 		}
 
-		private OrbitData OrbitDataFromOrbit (Orbit orbit)
+		private double CalculateSOIFromGravity (double gravityMult)
+		{
+			if (IsSun ())
+			{
+				return MAX_SEMI_MAJOR_AXIS;
+			}
+			double sphereOfInfluence = 0;
+			if (IsMoon ())
+			{
+				// All moons have their gravity adjusted according to the following quadratic:
+				// y = (4 * sqrt(7925156250 * x + 3082419716)+499779)/100000
+				double moonModifier = (double)((4.0f * Mathf.Sqrt ((7925156250.0f * (float)gravityMult) + 3082419716.0f) + 499779.0f) / 100000.0f);
+				// This "unskews" the gravity multiplier and allows moons to use the same gravity formula as planets
+				gravityMult *= moonModifier;
+			}
+			// Kerbal Space Program doesn't use a straight 1:1 ratio for Gravity -> SOI
+			// Instead, it uses something along the following quadratic: y = 7.42334 - 9.01415 x + 2.59081 x^2
+			// Note that the range from 1.25 to 2.15 generates negative values
+			if (gravityMult > 1.25 && gravityMult < 2.15)
+			{
+				gravityMult += 1.0f;
+			}
+			double difference = (2.59081 * gravityMult * gravityMult) - (9.01415 * gravityMult) + 7.42334;
+			sphereOfInfluence = gravityMult * difference;
+			// No stock moon has a larger SOI than 15% of Kerbin's
+			// If we generate absurdly large or invalid values, we throw them out
+			// This is the "old" formula and may not be perfect
+			if (double.IsNaN (sphereOfInfluence) || IsMoon () && sphereOfInfluence > 0.15)
+			{
+				Debug.LogWarning ("Tossing SOI for " + planet.name + ": " + sphereOfInfluence + ". Gravity: " + gravityMult);
+				sphereOfInfluence = planet.Radius * 1.5;
+				if (IsMoon ())
+				{
+					// Sphere of Influence is modified by the Mun's SOI and the gravity of our body
+					sphereOfInfluence += (MUN_SOI * Randomizer.GenerateFloat (0.0f, 1.5f));
+					if (sphereOfInfluence * 2 > referenceBodyData.sphereOfInfluence)
+					{
+						// Our parent body must have at least double our influence
+						float sphereMult = Randomizer.GenerateFloat (0.1f, 0.5f);
+						// There is still a minimum of our radius * 1.5, however
+						sphereOfInfluence = referenceBodyData.sphereOfInfluence * sphereMult;
+						if (sphereOfInfluence < planet.Radius * 1.5)
+						{
+							sphereOfInfluence = planet.Radius * 1.5;
+							// Parent body must now have at minimum double that value as its SOI
+							double parentSOI = sphereOfInfluence * Randomizer.GenerateFloat (2.0f, 3.0f);
+							solarSystem.AdjustPlanetSOI (referenceBodyData.planetID, parentSOI);
+							// Gravity must also reflect this
+							// Remove the parent's radius from the SOI calculations
+							parentSOI -= referenceBodyData.planet.Radius * 1.5;
+							// New gravity multiplier is based on how much stronger this is than Kerbin's SOI
+							double parentGravityMult = parentSOI / KERBIN_SOI;
+							solarSystem.AdjustPlanetGravity (referenceBodyData.planetID, KERBIN_GRAVITY * parentGravityMult);
+						}
+					}
+				}
+				else
+				{
+					// Planet
+					// Sphere of Influence is modified by Kerbin's SOI and the gravity of our body
+					sphereOfInfluence += (KERBIN_SOI * gravityMult);
+				}
+			}
+			else
+			{
+				if (sphereOfInfluence > 80)
+				{
+					// Jool would have an absurdly large SOI in this formula, but it's capped at 80
+					sphereOfInfluence = 80;
+				}
+				// Sphere of Influence is presented as a multiplier of Kerbin's SOI
+				sphereOfInfluence *= KERBIN_SOI;
+			}
+			return sphereOfInfluence;
+		}
+
+		private static OrbitData OrbitDataFromOrbit (Orbit orbit)
 		{
 			OrbitData data = new OrbitData ();
-			data.argumentOfPeriapsis = orbit.argumentOfPeriapsis;
-			data.eccentricity = orbit.eccentricity;
-			data.epoch = orbit.epoch;
 			data.inclination = orbit.inclination;
-			data.longitudeAscendingNode = orbit.LAN;
-			data.meanAnomalyAtEpoch = orbit.meanAnomalyAtEpoch;
-			data.referenceBody = orbit.referenceBody;
+			data.eccentricity = orbit.eccentricity;
 			data.semiMajorAxis = orbit.semiMajorAxis;
+			data.longitudeAscendingNode = orbit.LAN;
+			data.argumentOfPeriapsis = orbit.argumentOfPeriapsis;
+			data.meanAnomalyAtEpoch = orbit.meanAnomalyAtEpoch;
+			data.epoch = orbit.epoch;
+			data.period = orbit.period;
+			data.referenceBody = orbit.referenceBody;
 			return data;
 		}
 
@@ -512,6 +636,10 @@ namespace RandomizedSystems
 			// This formula produces a rough equivalent of the relationship between orbital periods and years on Earth
 			// Errors get higher as AU increases
 			double period = -0.114435 + (0.77734 * kerbalAU) + (0.337095 * (kerbalAU * kerbalAU));
+			if (period < 0)
+			{
+				period *= -1;
+			}
 			// Time is in years, so a conversion to seconds is required
 			// Given time is 1 Kerbin year
 			period *= 9203545;

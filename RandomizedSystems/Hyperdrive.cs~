@@ -4,11 +4,17 @@ namespace RandomizedSystems
 {
 	public class Hyperdrive : PartModule
 	{
+		/// <summary>
+		/// The seed.
+		/// </summary>
 		public static int seed = 0;
 		private Rect windowPosition;
 		private string seedString = "";
 
 		[KSPEvent(guiActive = true, guiName = "Start Warp Drive")]
+		/// <summary>
+		/// Starts the hyperspace jump.
+		/// </summary>
 		public void StartHyperspaceJump ()
 		{
 			CelestialBody reference = FlightGlobals.currentMainBody;
@@ -19,6 +25,20 @@ namespace RandomizedSystems
 			}
 			windowPosition = new Rect (100, 100, 0, 0);
 			RenderingManager.AddToPostDrawQueue (0, OnDraw);
+			Events ["JumpToKerbol"].active = true;
+		}
+
+		[KSPEvent(guiActive = true, guiName = "Return to Kerbol", active = false)]
+		/// <summary>
+		/// Jumps to kerbol.
+		/// </summary>
+		public void JumpToKerbol ()
+		{
+			string tempString = seedString;
+			seedString = "0";
+			Warp ();
+			seedString = tempString;
+			Events ["JumpToKerbol"].active = false;
 		}
 
 		private void OnDraw ()
@@ -57,9 +77,9 @@ namespace RandomizedSystems
 			{
 				seed += (int)c;
 			}
-			SolarData.CreateSystem (seedString);
-			Debug.LogWarning ("Created system from string " + seedString + ". Seed value: " + seed);
-			ScreenMessages.PostScreenMessage ("Warp Drive initialized. Traveling to coordinates " + seedString + ".", 3.0f, ScreenMessageStyle.UPPER_CENTER);
+			SolarData system = SolarData.CreateSystem (seedString);
+			Debug.LogWarning ("Created system " + system.name + " from string " + seedString + ". Seed value: " + seed);
+			ScreenMessages.PostScreenMessage ("Warp Drive initialized. Traveling to the " + system.name + " system, at coordinates " + seedString + ".", 3.0f, ScreenMessageStyle.UPPER_CENTER);
 		}
 	}
 }

@@ -5,10 +5,42 @@ namespace RandomizedSystems
 {
 	public class SolarData
 	{
+		/// <summary>
+		/// A dictionary containing all solar systems we have generated.
+		/// </summary>
 		public static Dictionary<string,SolarData> solarSystems = new Dictionary<string, SolarData> ();
+		/// <summary>
+		/// The seed for this solar system.
+		/// </summary>
 		public string seed = "";
+		/// <summary>
+		/// The sun of this solar system.
+		/// </summary>
 		public CelestialBody sun = null;
+		/// <summary>
+		/// The PlanetData corresponding with the sun.
+		/// </summary>
 		public PlanetData sunData = null;
+
+		/// <summary>
+		/// Gets the name of this solar system.
+		/// </summary>
+		/// <value>The name of this solar system.</value>
+		public string name
+		{
+			get
+			{
+				if (sun == null)
+				{
+					return "Kerbol";
+				}
+				else
+				{
+					return sun.name;
+				}
+			}
+		}
+
 		private string[] romanNumerals = new string[] {
 			"0",
 			"I",
@@ -23,6 +55,10 @@ namespace RandomizedSystems
 			"X"
 		};
 
+		/// <summary>
+		/// Gets the total planet count.
+		/// </summary>
+		/// <value>The planet count.</value>
 		public int planetCount
 		{
 			get
@@ -45,6 +81,10 @@ namespace RandomizedSystems
 			solarSystems.Add (KERBIN_SYSTEM_COORDS, this);
 		}
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="RandomizedSystems.SolarData"/> class.
+		/// </summary>
+		/// <param name="seed">The seed to use to generate the solar system.</param>
 		public SolarData (string seed)
 		{
 			// Set seed
@@ -55,6 +95,9 @@ namespace RandomizedSystems
 			solarSystems.Add (seed, this);
 		}
 
+		/// <summary>
+		/// Creates a solar system.
+		/// </summary>
 		public void CreateSystem ()
 		{
 			// Make all the planets
@@ -71,7 +114,7 @@ namespace RandomizedSystems
 			sun = FindSun ();
 			sunData = new PlanetData (sun, this, solarSystem.Count);
 			solarSystem.Add (sunData);
-			CacheAllPlanets (sun, 0);
+			CacheAllPlanets (sun, sunData.planetID);
 		}
 
 		private void CacheAllPlanets (CelestialBody currentPlanet, int parentID)
@@ -82,6 +125,7 @@ namespace RandomizedSystems
 				PlanetData planet = new PlanetData (child, this, childID);
 				solarSystem.Add (planet);
 				solarSystem [parentID].childBodies.Add (child);
+				solarSystem [parentID].childDataIDs.Add (childID);
 				CacheAllPlanets (child, childID);
 			}
 		}
@@ -104,6 +148,7 @@ namespace RandomizedSystems
 				PlanetData planet = solarSystem [i];
 				if (planet.referenceBody.name == sun.name)
 				{
+					// Only name planets
 					NamePlanet (ref planet, systemName, systemNameIndex);
 					systemNameIndex++;
 					solarSystem [i] = planet;
@@ -119,10 +164,10 @@ namespace RandomizedSystems
 			}
 		}
 
-		public void SortSystem ()
+		private void SortSystem ()
 		{
 			PlanetData[] allPlanets = solarSystem.ToArray ();
-			Quicksort (ref allPlanets, 0, allPlanets.Length - 1);
+			Quicksort (ref allPlanets, 1, allPlanets.Length - 1);
 			solarSystem = new List<PlanetData> (allPlanets);
 		}
 
@@ -158,6 +203,11 @@ namespace RandomizedSystems
 			moon.name = name;
 		}
 
+		/// <summary>
+		/// Gets the planet by its ID.
+		/// </summary>
+		/// <returns>A planet, based on its ID.</returns>
+		/// <param name="planetID">The planet ID to use.</param>
 		public PlanetData GetPlanetByID (int planetID)
 		{
 			if (planetID < solarSystem.Count)
@@ -171,6 +221,11 @@ namespace RandomizedSystems
 			}
 		}
 
+		/// <summary>
+		/// Adds a moon or other child body orbiting a planet.
+		/// </summary>
+		/// <param name="planetID">The ID of the parent planet.</param>
+		/// <param name="child">The child to put into orbit.</param>
 		public void AddChildToPlanet (int planetID, CelestialBody child)
 		{
 			if (planetID < solarSystem.Count)
@@ -183,6 +238,11 @@ namespace RandomizedSystems
 			}
 		}
 
+		/// <summary>
+		/// Adjusts a planet's sphere of influence.
+		/// </summary>
+		/// <param name="planetID">The planet ID to adjust.</param>
+		/// <param name="newSOI">The new Sphere of Influence.</param>
 		public void AdjustPlanetSOI (int planetID, double newSOI)
 		{
 			if (planetID < solarSystem.Count)
@@ -195,6 +255,11 @@ namespace RandomizedSystems
 			}
 		}
 
+		/// <summary>
+		/// Adjusts a planet's gravity.
+		/// </summary>
+		/// <param name="planetID">The planet ID to adjust.</param>
+		/// <param name="newGravity">The new gravity.</param>
 		public void AdjustPlanetGravity (int planetID, double newGravity)
 		{
 			if (planetID < solarSystem.Count)
@@ -207,6 +272,11 @@ namespace RandomizedSystems
 			}
 		}
 
+		/// <summary>
+		/// Creates a solar system from a seed.
+		/// </summary>
+		/// <returns>The newly-created system.</returns>
+		/// <param name="seed">The seed to use.</param>
 		public static SolarData CreateSystem (string seed)
 		{
 			SolarData solarSystem = null;
@@ -229,7 +299,7 @@ namespace RandomizedSystems
 		private static CelestialBody FindSun ()
 		{
 			CelestialBody currentBody = FlightGlobals.currentMainBody;
-			while (currentBody.referenceBody != null && currentBody.referenceBody.name != currentBody.name)
+			while (currentBody.referenceBody.name != currentBody.name)
 			{
 				currentBody = currentBody.referenceBody;
 			}
