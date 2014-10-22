@@ -33,9 +33,9 @@ Another thing to note is that upon restart, whatever you put in orbit in the "ne
 
 To activate the Warp Drive, just go into a solar orbit around Kerbol. Right-click on the Warp Drive part (found in the VAB under "Utility" -- it looks like an ASAS module), then click on "Activate Warp Drive." A box will come up asking for hyperspace coordinates. Type in your seed, then click the button and the system will randomize based on your seed.
 
-**Future Additions:**  
-* Return to the Kerbol System  
+**Future Additions:** 
 * Name your own planets  
 * Hide vessels not in the current system  
-* Custom model/Science requirement for Warp Drive
+* Custom model/Science requirement for Warp Drive  
+* Custom KSP Colony module  
 * Procedurally-generated terrain  
