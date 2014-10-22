@@ -24,12 +24,12 @@ Here's a list of what changes:
 * Eccentricity  
 * Inclination  
 * Longitude Ascending Node  
+* Rotation (how long a day is)  
+* Period (how long a year is)  
 
 What happens is an entirely new solar system is produced. The planets themselves are the same as the old ones, but everything about them is different.
 
-Note that at the moment, there's no way to return the bodies to the "old" system. You have to reload the save file from KSP's main menu (and if that doesn't work, restarting KSP does for sure). You can also still launch rockets from the space center on whatever Kerbin gets turned into.
-
-Another thing to note is that upon restart, whatever you put in orbit in the "new" system will still be in orbit on the corresponding planet/moon in the "old" system. The only thing I do is modify planets and orbits a la Hyperedit (not required to run the mod), so any vessels in orbit around a body will still be in orbit around that body afterward.
+Note that whatever you put in orbit in the "new" system will still be in orbit on the corresponding planet/moon in the "old" system. The only thing I do is modify planets and orbits a la Hyperedit (not required to run the mod), so any vessels in orbit around a body will still be in orbit around that body afterward.
 
 To activate the Warp Drive, just go into a solar orbit around Kerbol. Right-click on the Warp Drive part (found in the VAB under "Utility" -- it looks like an ASAS module), then click on "Activate Warp Drive." A box will come up asking for hyperspace coordinates. Type in your seed, then click the button and the system will randomize based on your seed.
 
