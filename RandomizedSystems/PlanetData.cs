@@ -306,9 +306,9 @@ namespace RandomizedSystems
 			#region Altitude
 			value = Randomizer.GetValue ();
 			// Floor resulting value at 1%, to be used later
-			if (value < 0.01f)
+			if (value < 0.0001f)
 			{
-				value = 0.01f;
+				value = 0.0001f;
 			}
 			// Max Semi-Major Axis is based on sphere of influence of parent body
 			double semiMajorAxis = referenceBodyData.sphereOfInfluence;
@@ -325,15 +325,12 @@ namespace RandomizedSystems
 			{
 				// Planet is moon
 				// Semi-Major Axis can be anywhere within the sphere of influence of parent body
-				double tempMajorAxis = semiMajorAxis;
+				double tempMajorAxis = semiMajorAxis * value;
 				double parentAtmosphereHeight = planet.Radius + referenceBody.Radius + (referenceBody.atmosphereScaleHeight * 1000.0 * Mathf.Log (1000000.0f));
-				int attempts = 0;
-				while (tempMajorAxis < parentAtmosphereHeight && attempts < 500)
+				while (tempMajorAxis < parentAtmosphereHeight)
 				{
-					attempts++;
-					//tempMajorAxis *= 2;
 					// Inside planet's atmosphere
-					value += Randomizer.GenerateFloat (0.01f, 0.4f);
+					value += Randomizer.GenerateFloat (0.001f, 0.1f);
 					tempMajorAxis = semiMajorAxis * value;
 					foreach (int id in referenceBodyData.childDataIDs)
 					{
@@ -342,28 +339,14 @@ namespace RandomizedSystems
 						double moonAxis = childData.orbitData.semiMajorAxis;
 						double moonMin = moonAxis - childData.planet.Radius;
 						double moonMax = moonAxis + childData.planet.Radius;
-						int childAttempts = 0;
-						while (tempMajorAxis + planet.Radius >= moonMin && tempMajorAxis <= moonMax && childAttempts < 500)
+						while (tempMajorAxis + planet.Radius >= moonMin && tempMajorAxis <= moonMax)
 						{
-							childAttempts++;
-							value += Randomizer.GenerateFloat (0.01f, 0.4f);
+							value += Randomizer.GenerateFloat (0.001f, 0.1f);
 							tempMajorAxis = semiMajorAxis * value;
-							if (childAttempts == 500)
-							{
-								Debug.LogWarning ("Attempts to move Semi-Major Axis out of the way of a child exceeded for " + planet.name);
-							}
 						}
-					}
-					if (attempts == 500)
-					{
-						Debug.LogWarning ("Attempts to move Semi-Major Axis exceeded for " + planet.name);
 					}
 				}
 				semiMajorAxis = tempMajorAxis;
-				if (semiMajorAxis <= 0)
-				{
-					Debug.LogError ("Semi-Major axis for " + planet.name + " is " + semiMajorAxis);
-				}
 			}
 			// Remove eccentricity from the semi-major axis
 			if (eccentricity != 1.0f)
