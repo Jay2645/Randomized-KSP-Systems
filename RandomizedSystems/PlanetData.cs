@@ -26,6 +26,7 @@ namespace RandomizedSystems
 		public int planetID = -1;
 		public List<CelestialBody> childBodies = new List<CelestialBody> ();
 		public List<int> childDataIDs = new List<int> ();
+		public Vector3 scale = Vector3.one;
 		private const double KERBIN_GRAVITY = 3531600000000.0;
 		private const double KERBAL_ASTRONOMICAL_UNIT = 13599840256;
 		private const double KERBIN_SOI = 84159286.0;
@@ -62,6 +63,18 @@ namespace RandomizedSystems
 			rotationPeriod = planet.rotationPeriod;
 			tempMultiplier = planet.atmoshpereTemperatureMultiplier;
 			sphereOfInfluence = planet.sphereOfInfluence;
+			if (ScaledSpace.Instance != null)
+			{
+				List<Transform> planets = ScaledSpace.Instance.scaledSpaceTransforms;
+				foreach (Transform planetTfm in planets)
+				{
+					if (planetTfm.name == planet.name)
+					{
+						scale = planetTfm.localScale;
+						break;
+					}
+				}
+			}
 
 			// Orbit
 			if (!IsSun ())
@@ -90,13 +103,28 @@ namespace RandomizedSystems
 		public void ApplyChanges ()
 		{
 			Debug.LogWarning ("Planet: " + name);
-			planet.bodyName = name;
 			if (IsSun ())
 			{
 				Debug.LogWarning ("Star");
+				planet.bodyName = name;
 			}
 			else
 			{
+				if (ScaledSpace.Instance != null)
+				{
+					List<Transform> planets = ScaledSpace.Instance.scaledSpaceTransforms;
+					foreach (Transform planetTfm in planets)
+					{
+						if (planetTfm.name == planet.name)
+						{
+							Debug.Log ("Scale: " + scale);
+							//planetTfm.localScale = scale;
+							planetTfm.name = name;
+							break;
+						}
+					}
+				}
+				planet.bodyName = name;
 				Debug.Log ("Gravity: " + (gravity / KERBIN_GRAVITY) + " times Kerbin gravity.");
 				planet.gravParameter = gravity;
 			}
@@ -300,18 +328,10 @@ namespace RandomizedSystems
 					gravityMult *= 20.0f;
 				}
 			}
-			List<Transform> planets = ScaledSpace.Instance.scaledSpaceTransforms;
-			foreach (Transform planetTfm in planets)
-			{
-				if (planetTfm.name == planet.name)
-				{
-					// Kerbin's scale is 0.1 -- since all these are given in respect to Kerbin, they need to be scaled down properly
-					float sizeMult = gravityMult * 0.1f;
-					planetTfm.localScale = new Vector3 (sizeMult, sizeMult, sizeMult);
-					break;
-				}
-			}
+			// All gravity values are relative to Kerbin
 			gravity = gravityMult * KERBIN_GRAVITY;
+			// Kerbin is scaled to 0.1 by default (Jool is 1)
+			scale = new Vector3 (gravityMult * 0.1f, gravityMult * 0.1f, gravityMult * 0.1f);
 			sphereOfInfluence = CalculateSOIFromGravity (gravityMult);
 			#endregion
 			#region Altitude
