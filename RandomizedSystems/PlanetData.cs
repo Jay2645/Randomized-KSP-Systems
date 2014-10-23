@@ -300,6 +300,17 @@ namespace RandomizedSystems
 					gravityMult *= 20.0f;
 				}
 			}
+			List<Transform> planets = ScaledSpace.Instance.scaledSpaceTransforms;
+			foreach (Transform planetTfm in planets)
+			{
+				if (planetTfm.name == planet.name)
+				{
+					// Kerbin's scale is 0.1 -- since all these are given in respect to Kerbin, they need to be scaled down properly
+					float sizeMult = gravityMult * 0.1f;
+					planetTfm.localScale = new Vector3 (sizeMult, sizeMult, sizeMult);
+					break;
+				}
+			}
 			gravity = gravityMult * KERBIN_GRAVITY;
 			sphereOfInfluence = CalculateSOIFromGravity (gravityMult);
 			#endregion
@@ -395,7 +406,7 @@ namespace RandomizedSystems
 				{
 					hasOxygen = true;
 				}
-				atmosphereHeight = Randomizer.GenerateInt (1, 10);
+				atmosphereHeight = Randomizer.GenerateFloat (0.5f, 15.0f);
 				atmospherePressureMult = Randomizer.GenerateFloat (0.1f, 15.0f);
 				ambientColor = new Color (Randomizer.GetValue () * 0.25f, Randomizer.GetValue () * 0.25f, Randomizer.GetValue () * 0.25f);
 			}

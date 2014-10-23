@@ -2,8 +2,10 @@
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
   <MonoDevelop.Ide.Workbench ActiveDocument="RandomizedSystems/PlanetData.cs">
     <Files>
-      <File FileName="RandomizedSystems/PlanetNamer.cs" Line="81" Column="17" />
-      <File FileName="RandomizedSystems/PlanetData.cs" Line="136" Column="5" />
+      <File FileName="RandomizedSystems/PlanetData.cs" Line="310" Column="70" />
+      <File FileName="RandomizedSystems/Hyperdrive.cs" Line="80" Column="36" />
+      <File FileName="RandomizedSystems/SolarData.cs" Line="352" Column="1" />
+      <File FileName="RandomizedSystems/Randomizer.cs" Line="56" Column="10" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>

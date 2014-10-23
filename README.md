@@ -26,6 +26,7 @@ Here's a list of what changes:
 * Longitude Ascending Node  
 * Rotation (how long a day is)  
 * Period (how long a year is)  
+* Sphere of Influence (unrelated to the size of the body -- Ike can have an SOI the size of Jool, for example)  
 
 What happens is an entirely new solar system is produced. The planets themselves are the same as the old ones, but everything about them is different.
 
