@@ -3,6 +3,11 @@ using System.Collections.Generic;
 
 namespace RandomizedSystems.Randomizers
 {
+	/// <summary>
+	/// The geological randomizer affects anything which involves the actual surface of the body.
+	/// This includes things like the size of the body and its rotation rate -- anything which doesn't affect other bodies.
+	/// This also includes things like whether we are a gas giant or not and where our oceans are.
+	/// </summary>
 	public class GeologicalRandomizer : PlanetRandomizer
 	{
 		public GeologicalRandomizer (CelestialBody body, PlanetData bodyData)

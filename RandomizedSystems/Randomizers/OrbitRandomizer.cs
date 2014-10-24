@@ -3,6 +3,10 @@ using System.Collections.Generic;
 
 namespace RandomizedSystems.Randomizers
 {
+	/// <summary>
+	/// The Orbit Randomizer is in charge of randomizing anything which affects other bodies.
+	/// This includes gravity and sphere of influence, as well as our own orbit (as us moving around can influence other bodies)
+	/// </summary>
 	public class OrbitRandomizer : PlanetRandomizer
 	{
 		public OrbitRandomizer (CelestialBody body, PlanetData bodyData)

@@ -2,6 +2,11 @@ using UnityEngine;
 
 namespace RandomizedSystems.Randomizers
 {
+	/// <summary>
+	/// The Atmosphere Randomizer is in charge of randomizing and changing values related to the atmosphere.
+	/// This includes things like oxygen, height, pressure, temperature, color, etc.
+	/// Anything that has to do with how a ship behaves in flight gets modified in here.
+	/// </summary>
 	public class AtmosphereRandomizer : PlanetRandomizer
 	{
 		public AtmosphereRandomizer (CelestialBody body, PlanetData bodyData)

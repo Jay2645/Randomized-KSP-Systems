@@ -3,6 +3,10 @@ using System.Collections.Generic;
 
 namespace RandomizedSystems.Randomizers
 {
+	/// <summary>
+	/// The general randomizer modifies things which don't fit into any other category.
+	/// This includes things like names and descriptions.
+	/// </summary>
 	public class GeneralRandomizer : PlanetRandomizer
 	{
 		public GeneralRandomizer (CelestialBody body, PlanetData bodyData)
