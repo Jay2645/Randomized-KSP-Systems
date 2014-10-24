@@ -51,6 +51,10 @@ namespace RandomizedSystems.Randomizers
 
 		public override void Randomize ()
 		{
+			if (Hyperdrive.seedString == AstroUtils.KERBIN_SYSTEM_COORDS)
+			{
+				return;
+			}
 			float value = WarpRNG.GetValue ();
 			// Atmosphere has a 75% chance of being generated if we are a planet
 			// Atmosphere has a 10% chance of being generated if we are a moon

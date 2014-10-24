@@ -117,6 +117,16 @@ namespace RandomizedSystems.Randomizers
 		/// </summary>
 		private static void Seed ()
 		{
+			if (string.IsNullOrEmpty (Hyperdrive.seedString))
+			{
+				// Can't seed
+				return;
+			}
+			// Reset the index if we exceed the string length
+			if (index >= Hyperdrive.seedString.Length)
+			{
+				index = 0;
+			}
 			// We convert the next character in the seed string to an int
 			int nextValue = (int)Hyperdrive.seedString [index];
 			if (int.MaxValue - nextValue <= Hyperdrive.seed)
@@ -130,11 +140,6 @@ namespace RandomizedSystems.Randomizers
 			Random.seed = Hyperdrive.seed;
 			// Increment the index
 			index++;
-			// Reset the index if we exceed the string length
-			if (index >= Hyperdrive.seedString.Length)
-			{
-				index = 0;
-			}
 		}
 	}
 }

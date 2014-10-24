@@ -85,12 +85,12 @@ namespace RandomizedSystems.Randomizers
 
 		public void CreateOrbit ()
 		{
-			if (orbitData.randomized)
+			if (orbitData.randomized || Hyperdrive.seedString == AstroUtils.KERBIN_SYSTEM_COORDS)
 			{
 				// Already randomized data
 				return;
 			}
-			//orbitData = new OrbitData ();
+			orbitData = new OrbitData ();
 			orbitData.randomized = true;
 			if (IsSun ())
 			{

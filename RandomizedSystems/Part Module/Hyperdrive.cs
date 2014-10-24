@@ -6,14 +6,23 @@ namespace RandomizedSystems
 	{
 		private Rect windowPosition;
 		public static int seed = 0;
-		public static string seedString = "0";
-		/*public override void OnActive ()
+		public static string seedString = AstroUtils.KERBIN_SYSTEM_COORDS;
+		public static bool hasInit = false;
+
+		public override void OnStart (StartState state)
 		{
-			if(seedString == "0")
+			if (!hasInit && state != StartState.Editor && state != StartState.None)
 			{
-				Events ["JumpToKerbol"].active = false;
+				if (seedString == AstroUtils.KERBIN_SYSTEM_COORDS)
+				{
+					Events ["JumpToKerbol"].active = false;
+				}
+				seedString = AstroUtils.KERBIN_SYSTEM_COORDS;
+				Warp (false);
+				hasInit = true;
 			}
-		}*/
+		}
+
 		[KSPEvent(guiActive = true, guiName = "Start Warp Drive")]
 		/// <summary>
 		/// Starts the hyperspace jump.
@@ -28,7 +37,6 @@ namespace RandomizedSystems
 			}
 			windowPosition = new Rect (100, 100, 0, 0);
 			RenderingManager.AddToPostDrawQueue (0, OnDraw);
-			Events ["JumpToKerbol"].active = true;
 		}
 
 		[KSPEvent(guiActive = true, guiName = "Return to Kerbol", active = false)]
@@ -38,8 +46,8 @@ namespace RandomizedSystems
 		public void JumpToKerbol ()
 		{
 			string tempString = seedString;
-			seedString = "0";
-			Warp ();
+			seedString = AstroUtils.KERBIN_SYSTEM_COORDS;
+			Warp (true);
 			seedString = tempString;
 			Events ["JumpToKerbol"].active = false;
 		}
@@ -54,13 +62,13 @@ namespace RandomizedSystems
 
 		private void OnWindow (int windowID)
 		{
-			GUILayout.BeginHorizontal (GUILayout.Width (250.0f));
+			GUILayout.BeginVertical (GUILayout.Width (250.0f));
 			seedString = GUILayout.TextField (seedString);
 			if (GUILayout.Button ("Start Warp Drive"))
 			{
 				if (seedString != "")
 				{
-					Warp ();
+					Warp (true);
 				}
 				else
 				{
@@ -68,16 +76,23 @@ namespace RandomizedSystems
 				}
 				RenderingManager.RemoveFromPostDrawQueue (0, OnDraw);
 			}
-			GUILayout.EndHorizontal ();
+			GUILayout.EndVertical ();
 
 			GUI.DragWindow ();
 		}
 
-		private void Warp ()
+		private void Warp (bool showMessage)
 		{
 			SolarData system = SolarData.CreateSystem (seedString);
 			Debugger.LogWarning ("Created system " + system.name + " from string " + seedString + ".");
-			ScreenMessages.PostScreenMessage ("Warp Drive initialized. Traveling to the " + system.name + " system, at coordinates " + seedString + ".", 3.0f, ScreenMessageStyle.UPPER_CENTER);
+			if (showMessage)
+			{
+				ScreenMessages.PostScreenMessage ("Warp Drive initialized. Traveling to the " + system.name + " system, at coordinates " + seedString + ".", 3.0f, ScreenMessageStyle.UPPER_CENTER);
+			}
+			if (seedString != AstroUtils.KERBIN_SYSTEM_COORDS)
+			{
+				Events ["JumpToKerbol"].active = true;
+			}
 		}
 	}
 }

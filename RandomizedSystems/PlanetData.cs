@@ -257,12 +257,12 @@ namespace RandomizedSystems
 
 		public void ApplyChanges ()
 		{
-			string output = "Planet: " + name;
+			string output = "Planet: " + generalRandomizer.GetName (false);
 			if (IsSun ())
 			{
-				output = "Star: " + name;
+				output = "Star: " + generalRandomizer.GetName (false);
 			}
-			Debugger.LogWarning (output, "PlanetData.ApplyChanges()");
+			Debugger.LogWarning (output);
 			foreach (PlanetRandomizer randomizer in allRandomizers)
 			{
 				randomizer.Apply ();
@@ -271,7 +271,6 @@ namespace RandomizedSystems
 
 		public bool IsSun ()
 		{
-			// The sun orbits itself
 			return AstroUtils.IsSun (planet);
 		}
 

@@ -92,7 +92,7 @@ namespace RandomizedSystems.Randomizers
 						{
 							Debugger.Log ("Scale: " + scale);
 							//planetTfm.localScale = scale;
-							planetTfm.name = planetData.name;
+							planetTfm.name = planetData.generalRandomizer.GetName (false);
 							break;
 						}
 					}

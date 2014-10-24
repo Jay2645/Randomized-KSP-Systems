@@ -68,7 +68,6 @@ namespace RandomizedSystems
 		}
 
 		private List<PlanetData> solarSystem = null;
-		private const string KERBIN_SYSTEM_COORDS = "0";
 
 		/// <summary>
 		/// Creates the Kerbin system. Should be called before creating any other system.
@@ -76,9 +75,9 @@ namespace RandomizedSystems
 		public SolarData ()
 		{
 			// Special case: Kerbin
-			this.seed = KERBIN_SYSTEM_COORDS;
+			this.seed = AstroUtils.KERBIN_SYSTEM_COORDS;
 			MakeNewSystem ();
-			solarSystems.Add (KERBIN_SYSTEM_COORDS, this);
+			solarSystems.Add (AstroUtils.KERBIN_SYSTEM_COORDS, this);
 		}
 
 		/// <summary>
@@ -134,6 +133,10 @@ namespace RandomizedSystems
 
 		private void RandomizeSystem ()
 		{
+			if (seed == AstroUtils.KERBIN_SYSTEM_COORDS)
+			{
+				return;
+			}
 			for (int i = 0; i < solarSystem.Count; i++)
 			{
 				solarSystem [i].childBodies = new List<CelestialBody> ();
@@ -304,7 +307,7 @@ namespace RandomizedSystems
 		public static SolarData CreateSystem (string seed)
 		{
 			SolarData solarSystem = null;
-			if (!solarSystems.ContainsKey (KERBIN_SYSTEM_COORDS))
+			if (!solarSystems.ContainsKey (AstroUtils.KERBIN_SYSTEM_COORDS))
 			{
 				solarSystem = new SolarData ();
 			}
@@ -313,7 +316,7 @@ namespace RandomizedSystems
 				solarSystem = solarSystems [seed];
 				solarSystem.ApplySystem ();
 			}
-			else
+			else if (seed != AstroUtils.KERBIN_SYSTEM_COORDS)
 			{
 				solarSystem = new SolarData (seed);
 			}
