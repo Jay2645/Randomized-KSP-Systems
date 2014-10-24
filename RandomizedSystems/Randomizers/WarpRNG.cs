@@ -1,8 +1,8 @@
 using UnityEngine;
 
-namespace RandomizedSystems
+namespace RandomizedSystems.Randomizers
 {
-	public static class Randomizer
+	public static class WarpRNG
 	{
 		public static string[] prefixes = new string[] {
 			"Ker",

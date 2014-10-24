@@ -9,8 +9,14 @@ namespace RandomizedSystems
 		/// </summary>
 		public static int seed = 0;
 		private Rect windowPosition;
-		private string seedString = "";
-
+		private string seedString = "0";
+		/*public override void OnActive ()
+		{
+			if(seedString == "0")
+			{
+				Events ["JumpToKerbol"].active = false;
+			}
+		}*/
 		[KSPEvent(guiActive = true, guiName = "Start Warp Drive")]
 		/// <summary>
 		/// Starts the hyperspace jump.

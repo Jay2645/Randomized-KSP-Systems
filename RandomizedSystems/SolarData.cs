@@ -119,8 +119,10 @@ namespace RandomizedSystems
 
 		private void CacheAllPlanets (CelestialBody currentPlanet, int parentID)
 		{
+			int count = 0;
 			foreach (CelestialBody child in currentPlanet.orbitingBodies)
 			{
+				count++;
 				int childID = solarSystem.Count;
 				PlanetData planet = new PlanetData (child, this, childID);
 				solarSystem.Add (planet);
@@ -146,12 +148,22 @@ namespace RandomizedSystems
 			for (int i = 1; i < solarSystem.Count; i++)
 			{
 				PlanetData planet = solarSystem [i];
-				if (planet.referenceBody.name == sun.name)
+				if (!planet.IsSun () && !planet.IsMoon ())
 				{
-					// Only name planets
+					// Name planets
 					NamePlanet (ref planet, systemName, systemNameIndex);
 					systemNameIndex++;
 					solarSystem [i] = planet;
+				}
+			}
+			for (int i = 1; i < solarSystem.Count; i++)
+			{
+				PlanetData moon = solarSystem [i];
+				if (moon.IsMoon ())
+				{
+					NameMoon (ref moon, moon.referenceBodyData);
+					solarSystem [i] = moon;
+					break;
 				}
 			}
 		}
@@ -174,21 +186,12 @@ namespace RandomizedSystems
 		private void NamePlanet (ref PlanetData planet, string systemName, int systemNameIndex)
 		{
 			planet.name = systemName + " " + ((char)systemNameIndex);
-			int moonCount = 0;
-			foreach (CelestialBody moon in planet.childBodies)
-			{
-				for (int i = 0; i < solarSystem.Count; i++)
-				{
-					PlanetData moonData = solarSystem [i];
-					if (moonData.planet == moon)
-					{
-						moonCount++;
-						NameMoon (ref moonData, systemName + " " + ((char)systemNameIndex), moonCount);
-						solarSystem [i] = moonData;
-						break;
-					}
-				}
-			}
+		}
+
+		private void NameMoon (ref PlanetData moon, PlanetData planet)
+		{
+			solarSystem [planet.planetID].moonCount++;
+			NameMoon (ref moon, planet.name, solarSystem [planet.planetID].moonCount);
 		}
 
 		private void NameMoon (ref PlanetData moon, string planetName, int count)
@@ -221,6 +224,22 @@ namespace RandomizedSystems
 			}
 		}
 
+		public PlanetData GetPlanetByCelestialBody (CelestialBody body)
+		{
+			if (body == null)
+			{
+				return null;
+			}
+			foreach (PlanetData planetData in solarSystem)
+			{
+				if (planetData.planet == body)
+				{
+					return planetData;
+				}
+			}
+			return null;
+		}
+
 		/// <summary>
 		/// Adds a moon or other child body orbiting a planet.
 		/// </summary>
@@ -236,6 +255,11 @@ namespace RandomizedSystems
 			{
 				Debug.LogError (planetID + " does not match up with any planet!");
 			}
+		}
+
+		public void AddChildToPlanet (PlanetData parent, CelestialBody child)
+		{
+			AddChildToPlanet (parent.planetID, child);
 		}
 
 		/// <summary>
@@ -313,12 +337,12 @@ namespace RandomizedSystems
 
 			while (i <= j)
 			{
-				while (elements[i].orbitData.semiMajorAxis < pivot.orbitData.semiMajorAxis)
+				while (elements[i].semiMajorAxis < pivot.semiMajorAxis)
 				{
 					i++;
 				}
 
-				while (elements[j].orbitData.semiMajorAxis > pivot.orbitData.semiMajorAxis)
+				while (elements[j].semiMajorAxis > pivot.semiMajorAxis)
 				{
 					j--;
 				}

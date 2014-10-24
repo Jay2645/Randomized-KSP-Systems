@@ -40,9 +40,19 @@
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PlanetData.cs" />
-    <Compile Include="Hyperdrive.cs" />
     <Compile Include="SolarData.cs" />
-    <Compile Include="Randomizer.cs" />
+    <Compile Include="Part Module\Hyperdrive.cs" />
+    <Compile Include="Randomizers\PlanetRandomizer.cs" />
+    <Compile Include="Randomizers\WarpRNG.cs" />
+    <Compile Include="Randomizers\OrbitRandomizer.cs" />
+    <Compile Include="Randomizers\AtmosphereRandomizer.cs" />
+    <Compile Include="Randomizers\GeologicalRandomizer.cs" />
+    <Compile Include="AstroUtils.cs" />
+    <Compile Include="Randomizers\GeneralRandomizer.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <Folder Include="Part Module\" />
+    <Folder Include="Randomizers\" />
+  </ItemGroup>
 </Project>
