@@ -219,7 +219,7 @@ namespace RandomizedSystems
 			}
 			else
 			{
-				Debug.LogError (planetID + " does not match up with any planet!");
+				Debugger.LogError (planetID + " does not match up with any planet!", "SolarData.GetPlanetByID()");
 				return null;
 			}
 		}
@@ -253,7 +253,7 @@ namespace RandomizedSystems
 			}
 			else
 			{
-				Debug.LogError (planetID + " does not match up with any planet!");
+				Debugger.LogError (planetID + " does not match up with any planet!", "SolarData.AddChildToPlanet()");
 			}
 		}
 
@@ -275,7 +275,7 @@ namespace RandomizedSystems
 			}
 			else
 			{
-				Debug.LogError (planetID + " does not match up with any planet!");
+				Debugger.LogError (planetID + " does not match up with any planet!", "SolarData.AdjustPlanetSOI()");
 			}
 		}
 
@@ -292,7 +292,7 @@ namespace RandomizedSystems
 			}
 			else
 			{
-				Debug.LogError (planetID + " does not match up with any planet!");
+				Debugger.LogError (planetID + " does not match up with any planet!", "SolarData.AdjustPlanetGravity()");
 			}
 		}
 

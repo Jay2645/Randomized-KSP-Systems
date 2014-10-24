@@ -155,7 +155,7 @@ namespace RandomizedSystems
 			// This is the "old" formula and may not be perfect
 			if (double.IsNaN (sphereOfInfluence) || body.IsMoon () && sphereOfInfluence > 0.15)
 			{
-				Debug.LogWarning ("Tossing SOI for " + body.name + ": " + sphereOfInfluence + ". Gravity: " + gravityMult);
+				Debugger.LogWarning ("Tossing SOI for " + body.name + ": " + sphereOfInfluence + ". Gravity: " + gravityMult);
 				sphereOfInfluence = body.planet.Radius * 1.5;
 				if (body.IsMoon ())
 				{
@@ -206,7 +206,7 @@ namespace RandomizedSystems
 		{
 			if (check == null)
 			{
-				Debug.LogError ("Sun check was null!");
+				Debugger.LogError ("Sun check was null!");
 				return false;
 			}
 			return check.name == check.referenceBody.name;

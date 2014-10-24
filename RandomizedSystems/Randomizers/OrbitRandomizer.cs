@@ -347,10 +347,10 @@ namespace RandomizedSystems.Randomizers
 		{
 			if (!IsSun ())
 			{
-				Debug.Log ("Sphere of influence: " + sphereOfInfluence + " meters (" + (sphereOfInfluence / AstroUtils.KERBIN_SOI) + " times Kerbin SOI)");
+				Debugger.Log ("Sphere of influence: " + sphereOfInfluence + " meters (" + (sphereOfInfluence / AstroUtils.KERBIN_SOI) + " times Kerbin SOI)");
 				planet.sphereOfInfluence = sphereOfInfluence;
 			}
-			Debug.Log ("Gravity: " + (gravity / AstroUtils.KERBIN_GRAVITY) + " times Kerbin gravity.");
+			Debugger.Log ("Gravity: " + (gravity / AstroUtils.KERBIN_GRAVITY) + " times Kerbin gravity.");
 			planet.gravParameter = gravity;
 			if (orbitDriver != null)
 			{
@@ -403,37 +403,37 @@ namespace RandomizedSystems.Randomizers
 			if (double.IsNaN (inclination))
 			{
 				inclination = 0;
-				Debug.LogWarning ("Inclination not a number!");
+				Debugger.LogWarning ("Inclination not a number!");
 			}
 			if (double.IsNaN (eccentricity))
 			{
 				eccentricity = 0;
-				Debug.LogWarning ("Eccentricity not a number!");
+				Debugger.LogWarning ("Eccentricity not a number!");
 			}
 			if (double.IsNaN (semiMajorAxis))
 			{
 				semiMajorAxis = referenceBody.Radius + referenceBody.maxAtmosphereAltitude + 10000;
-				Debug.LogWarning ("Semi-Major Axis not a number!");
+				Debugger.LogWarning ("Semi-Major Axis not a number!");
 			}
 			if (double.IsNaN (longitudeAscendingNode))
 			{
 				longitudeAscendingNode = 0;
-				Debug.LogWarning ("Longitude Ascending Node not a number!");
+				Debugger.LogWarning ("Longitude Ascending Node not a number!");
 			}
 			if (double.IsNaN (argumentOfPeriapsis))
 			{
 				argumentOfPeriapsis = 0;
-				Debug.LogWarning ("Argument of Periapsis not a number!");
+				Debugger.LogWarning ("Argument of Periapsis not a number!");
 			}
 			if (double.IsNaN (meanAnomalyAtEpoch))
 			{
 				meanAnomalyAtEpoch = 0;
-				Debug.LogWarning ("Mean Anomaly at Epoch not a number!");
+				Debugger.LogWarning ("Mean Anomaly at Epoch not a number!");
 			}
 			if (double.IsNaN (epoch))
 			{
 				epoch = Planetarium.GetUniversalTime ();
-				Debug.LogWarning ("Epoch not a number!");
+				Debugger.LogWarning ("Epoch not a number!");
 			}
 			if (Mathf.Sign ((float)eccentricity - 1.0f) == Mathf.Sign ((float)semiMajorAxis))
 			{
@@ -452,28 +452,28 @@ namespace RandomizedSystems.Randomizers
 			}
 			if (referenceBody == null)
 			{
-				Debug.LogError ("Reference body is null!");
+				Debugger.LogError ("Reference body is null!");
 				// Cannot proceed with setting orbit
 				return orbit;
 			}
 
-			Debug.Log ("Reference Body: " + referenceBody);
+			Debugger.Log ("Reference Body: " + referenceBody);
 			orbit.referenceBody = referenceBody;
-			Debug.Log ("Inclination: " + inclination);
+			Debugger.Log ("Inclination: " + inclination);
 			orbit.inclination = inclination;
-			Debug.Log ("Eccentricity: " + eccentricity);
+			Debugger.Log ("Eccentricity: " + eccentricity);
 			orbit.eccentricity = eccentricity;
-			Debug.Log ("Semi-Major Axis: " + semiMajorAxis + " (" + (semiMajorAxis / AstroUtils.KERBIN_SOI) + " Kerbin Astronomical Units)");
+			Debugger.Log ("Semi-Major Axis: " + semiMajorAxis + " (" + (semiMajorAxis / AstroUtils.KERBIN_SOI) + " Kerbin Astronomical Units)");
 			orbit.semiMajorAxis = semiMajorAxis;
-			Debug.Log ("Longitude of Ascending Node: " + longitudeAscendingNode);
+			Debugger.Log ("Longitude of Ascending Node: " + longitudeAscendingNode);
 			orbit.LAN = longitudeAscendingNode;
-			Debug.Log ("Argument of Periapsis: " + argumentOfPeriapsis);
+			Debugger.Log ("Argument of Periapsis: " + argumentOfPeriapsis);
 			orbit.argumentOfPeriapsis = argumentOfPeriapsis;
-			Debug.Log ("Mean Anomaly at Epoch: " + meanAnomalyAtEpoch);
+			Debugger.Log ("Mean Anomaly at Epoch: " + meanAnomalyAtEpoch);
 			orbit.meanAnomalyAtEpoch = meanAnomalyAtEpoch;
-			Debug.Log ("Epoch: " + epoch);
+			Debugger.Log ("Epoch: " + epoch);
 			orbit.epoch = epoch;
-			Debug.Log ("Period: " + period + " seconds (" + (period / 9203545) + " years)");
+			Debugger.Log ("Period: " + period + " seconds (" + (period / 9203545) + " years)");
 			orbit.period = period;
 			return orbit;
 		}

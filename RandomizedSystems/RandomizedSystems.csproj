@@ -49,10 +49,12 @@
     <Compile Include="Randomizers\GeologicalRandomizer.cs" />
     <Compile Include="AstroUtils.cs" />
     <Compile Include="Randomizers\GeneralRandomizer.cs" />
+    <Compile Include="Debugger\Logger.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
     <Folder Include="Part Module\" />
     <Folder Include="Randomizers\" />
+    <Folder Include="Debugger\" />
   </ItemGroup>
 </Project>

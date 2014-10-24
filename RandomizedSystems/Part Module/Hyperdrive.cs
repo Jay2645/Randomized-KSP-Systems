@@ -76,7 +76,7 @@ namespace RandomizedSystems
 		private void Warp ()
 		{
 			SolarData system = SolarData.CreateSystem (seedString);
-			Debug.LogWarning ("Created system " + system.name + " from string " + seedString + ".");
+			Debugger.LogWarning ("Created system " + system.name + " from string " + seedString + ".");
 			ScreenMessages.PostScreenMessage ("Warp Drive initialized. Traveling to the " + system.name + " system, at coordinates " + seedString + ".", 3.0f, ScreenMessageStyle.UPPER_CENTER);
 		}
 	}

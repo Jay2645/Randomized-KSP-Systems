@@ -90,7 +90,7 @@ namespace RandomizedSystems.Randomizers
 					{
 						if (planetTfm.name == planet.name)
 						{
-							Debug.Log ("Scale: " + scale);
+							Debugger.Log ("Scale: " + scale);
 							//planetTfm.localScale = scale;
 							planetTfm.name = planetData.name;
 							break;
@@ -98,7 +98,7 @@ namespace RandomizedSystems.Randomizers
 					}
 				}
 			}
-			Debug.Log ("Rotation period: " + rotationPeriod + " seconds per rotation (" +
+			Debugger.Log ("Rotation period: " + rotationPeriod + " seconds per rotation (" +
 				(rotationPeriod / 60) + " minutes, " + ((rotationPeriod / 60) / 60) + " hours)");
 			planet.rotationPeriod = rotationPeriod;
 		}
