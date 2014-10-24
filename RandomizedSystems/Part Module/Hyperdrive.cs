@@ -4,12 +4,9 @@ namespace RandomizedSystems
 {
 	public class Hyperdrive : PartModule
 	{
-		/// <summary>
-		/// The seed.
-		/// </summary>
-		public static int seed = 0;
 		private Rect windowPosition;
-		private string seedString = "0";
+		public static int seed = 0;
+		public static string seedString = "0";
 		/*public override void OnActive ()
 		{
 			if(seedString == "0")
@@ -78,13 +75,8 @@ namespace RandomizedSystems
 
 		private void Warp ()
 		{
-			seed = 0;
-			foreach (char c in seedString)
-			{
-				seed += (int)c;
-			}
 			SolarData system = SolarData.CreateSystem (seedString);
-			Debug.LogWarning ("Created system " + system.name + " from string " + seedString + ". Seed value: " + seed);
+			Debug.LogWarning ("Created system " + system.name + " from string " + seedString + ".");
 			ScreenMessages.PostScreenMessage ("Warp Drive initialized. Traveling to the " + system.name + " system, at coordinates " + seedString + ".", 3.0f, ScreenMessageStyle.UPPER_CENTER);
 		}
 	}
