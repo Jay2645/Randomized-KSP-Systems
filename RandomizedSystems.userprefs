@@ -1,17 +1,21 @@
 ﻿<Properties>
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="RandomizedSystems/Randomizers/OrbitRandomizer.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="RandomizedSystems/Part Module/Hyperdrive.cs">
     <Files>
-      <File FileName="RandomizedSystems/Randomizers/WarpRNG.cs" Line="1" Column="1" />
-      <File FileName="RandomizedSystems/PlanetData.cs" Line="225" Column="4" />
-      <File FileName="RandomizedSystems/Randomizers/OrbitRandomizer.cs" Line="82" Column="3" />
-      <File FileName="RandomizedSystems/Randomizers/AtmosphereRandomizer.cs" Line="92" Column="50" />
-      <File FileName="RandomizedSystems/SolarData.cs" Line="130" Column="55" />
-      <File FileName="RandomizedSystems/AstroUtils.cs" Line="56" Column="11" />
-      <File FileName="RandomizedSystems/Randomizers/GeneralRandomizer.cs" Line="28" Column="4" />
-      <File FileName="RandomizedSystems/Randomizers/PlanetRandomizer.cs" Line="40" Column="3" />
-      <File FileName="RandomizedSystems/Randomizers/GeologicalRandomizer.cs" Line="84" Column="89" />
-      <File FileName="RandomizedSystems/Part Module/Hyperdrive.cs" Line="80" Column="38" />
+      <File FileName="RandomizedSystems/Randomizers/WarpRNG.cs" Line="128" Column="15" />
+      <File FileName="RandomizedSystems/PlanetData.cs" Line="273" Column="4" />
+      <File FileName="RandomizedSystems/Randomizers/OrbitRandomizer.cs" Line="309" Column="15" />
+      <File FileName="RandomizedSystems/Randomizers/AtmosphereRandomizer.cs" Line="56" Column="12" />
+      <File FileName="RandomizedSystems/SolarData.cs" Line="131" Column="5" />
+      <File FileName="RandomizedSystems/AstroUtils.cs" Line="20" Column="9" />
+      <File FileName="RandomizedSystems/Randomizers/GeneralRandomizer.cs" Line="37" Column="26" />
+      <File FileName="RandomizedSystems/Randomizers/PlanetRandomizer.cs" Line="26" Column="15" />
+      <File FileName="RandomizedSystems/Randomizers/GeologicalRandomizer.cs" Line="46" Column="4" />
+      <File FileName="RandomizedSystems/Part Module/Hyperdrive.cs" Line="96" Column="4" />
+      <File FileName="RandomizedSystems/Debugger/Debugger.cs" Line="35" Column="4" />
+      <File FileName="RandomizedSystems/Persistence/PersistenceGenerator.cs" Line="21" Column="5" />
+      <File FileName="RandomizedSystems/Persistence/SaveGameRecovery.cs" Line="25" Column="1" />
+      <File FileName="RandomizedSystems/Persistence/SeedTracker.cs" Line="61" Column="61" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
