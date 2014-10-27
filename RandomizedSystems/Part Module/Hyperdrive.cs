@@ -1,4 +1,5 @@
 using UnityEngine;
+using RandomizedSystems.Persistence;
 
 namespace RandomizedSystems
 {
@@ -7,6 +8,7 @@ namespace RandomizedSystems
 		private Rect windowPosition;
 		public static int seed = 0;
 		public static string seedString = AstroUtils.KERBIN_SYSTEM_COORDS;
+		private string lastSeed = AstroUtils.KERBIN_SYSTEM_COORDS;
 		public static bool hasInit = false;
 
 		public override void OnStart (StartState state)
@@ -36,6 +38,7 @@ namespace RandomizedSystems
 				return;
 			}
 			windowPosition = new Rect (100, 100, 0, 0);
+			lastSeed = seedString;
 			RenderingManager.AddToPostDrawQueue (0, OnDraw);
 		}
 
@@ -84,6 +87,8 @@ namespace RandomizedSystems
 		private void Warp (bool showMessage)
 		{
 			SolarData system = SolarData.CreateSystem (seedString);
+			SeedTracker.Jump ();
+			PersistenceGenerator.CreatePersistenceFile (lastSeed, seedString);
 			Debugger.LogWarning ("Created system " + system.name + " from string " + seedString + ".");
 			if (showMessage)
 			{
