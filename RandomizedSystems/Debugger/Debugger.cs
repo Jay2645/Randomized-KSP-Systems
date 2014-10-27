@@ -33,6 +33,11 @@ namespace RandomizedSystems
 		{
 			LogError (methodName + ": " + message);
 		}
+
+		public static void LogException (object message, System.Exception exception)
+		{
+			LogError ("Exception! " + message + " Exception data: " + exception.Message + "," + exception.StackTrace);
+		}
 	}
 }
 

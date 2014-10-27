@@ -86,9 +86,21 @@ namespace RandomizedSystems
 
 		private void Warp (bool showMessage)
 		{
-			SolarData system = SolarData.CreateSystem (seedString);
-			SeedTracker.Jump ();
-			PersistenceGenerator.CreatePersistenceFile (lastSeed, seedString);
+			SolarData system = null;
+			try
+			{
+				system = SolarData.CreateSystem (seedString);
+				SeedTracker.Jump ();
+				PersistenceGenerator.CreatePersistenceFile (lastSeed, seedString);
+			}
+			catch (System.Exception e)
+			{
+				Debugger.LogException ("Unable to jump to system!", e);
+				ScreenMessages.PostScreenMessage ("Warp Drive failed due to " + e.GetType () + "." +
+					"\nPlease press Alt+F2 and copy and paste or send a screenshot of the debugger to the Warp Drive developers!" +
+					"\nException Message: " + e.Message, 10.0f, ScreenMessageStyle.UPPER_CENTER);
+				return;
+			}
 			Debugger.LogWarning ("Created system " + system.name + " from string " + seedString + ".");
 			if (showMessage)
 			{

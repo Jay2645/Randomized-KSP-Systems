@@ -28,37 +28,37 @@ namespace RandomizedSystems.Persistence
 		{
 			try
 			{
-			string appPath = KSPUtil.ApplicationRootPath;
-			string addonFolder = "";
-			while (!string.IsNullOrEmpty(appPath) && addonFolder == "")
-			{
-				if (Directory.Exists (appPath))
+				string appPath = KSPUtil.ApplicationRootPath;
+				string addonFolder = "";
+				while (!string.IsNullOrEmpty(appPath) && addonFolder == "")
 				{
-					string[] allDirectories = Directory.GetDirectories (appPath);
-					foreach (string directory in allDirectories)
+					if (Directory.Exists (appPath))
 					{
-						if (Path.GetFileName (directory).ToLower () == "gamedata")
+						string[] allDirectories = Directory.GetDirectories (appPath);
+						foreach (string directory in allDirectories)
 						{
-							addonFolder = directory;
+							if (Path.GetFileName (directory).ToLower () == "gamedata")
+							{
+								addonFolder = directory;
+							}
 						}
 					}
+					if (addonFolder == "")
+					{
+						// Shorten the path name
+						appPath = Path.GetDirectoryName (appPath);
+					}
 				}
-				if (addonFolder == "")
+				addonFolder = Path.Combine (addonFolder, "RandomizedSystems");
+				cfgFile = Path.Combine (addonFolder, "lastseed.seed");
+				if (!File.Exists (cfgFile))
 				{
-					// Shorten the path name
-					appPath = Path.GetDirectoryName (appPath);
+					File.Create (cfgFile);
 				}
 			}
-			addonFolder = Path.Combine (addonFolder, "RandomizedSystems");
-			cfgFile = Path.Combine (addonFolder, "lastseed.seed");
-			if (!File.Exists (cfgFile))
+			catch (IOException e)
 			{
-				File.Create (cfgFile);
-			}
-			}
-			catch(IOException e)
-			{
-				Debugger.LogError ("Could not load config file! Error: "+e.Source+", stack trace: "+e.StackTrace".");
+				Debugger.LogException ("Could not load config file!", e);
 			}
 		}
 	}

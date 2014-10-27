@@ -19,15 +19,15 @@ namespace RandomizedSystems.Persistence
 			CopyPersistenceFileToSystems (persistence, oldSeed);
 			if (PersistenceExists (persistence, newSeed))
 			{
-				//string output = Regex.Replace (File.ReadAllText (persistence), "(\t\tVESSEL)((\\s)*(\\S)*)*(\t\t})", string.Empty, RegexOptions.Multiline);
-				//File.WriteAllText (persistence, output);
+				string output = Regex.Replace (File.ReadAllText (persistence), "(\t\tVESSEL)((\\s)*(\\S)*)*(\t\t})", string.Empty, RegexOptions.Multiline);
+				File.WriteAllText (persistence, output);
 				/*File.Delete (persistence);
 				CopyPersistenceFileFromSystems (persistence, newSeed);*/
 			}
 			else
 			{
-				//string output = Regex.Replace (File.ReadAllText (persistence), "(\t\tVESSEL)((\\s)*(\\S)*)*(\t\t})", string.Empty, RegexOptions.Multiline);
-				//File.WriteAllText (persistence, output);
+				string output = Regex.Replace (File.ReadAllText (persistence), "(\t\tVESSEL)((\\s)*(\\S)*)*(\t\t})", string.Empty, RegexOptions.Multiline);
+				File.WriteAllText (persistence, output);
 			}
 		}
 
