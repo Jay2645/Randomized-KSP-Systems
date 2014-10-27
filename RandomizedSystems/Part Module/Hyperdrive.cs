@@ -95,10 +95,9 @@ namespace RandomizedSystems
 			}
 			catch (System.Exception e)
 			{
+				// Catch all exceptions so users know if something goes wrong
+				ScreenMessages.PostScreenMessage ("Warp Drive failed due to " + e.GetType () + ".");
 				Debugger.LogException ("Unable to jump to system!", e);
-				ScreenMessages.PostScreenMessage ("Warp Drive failed due to " + e.GetType () + "." +
-					"\nPlease press Alt+F2 and copy and paste or send a screenshot of the debugger to the Warp Drive developers!" +
-					"\nException Message: " + e.Message, 10.0f, ScreenMessageStyle.UPPER_CENTER);
 				return;
 			}
 			Debugger.LogWarning ("Created system " + system.name + " from string " + seedString + ".");
