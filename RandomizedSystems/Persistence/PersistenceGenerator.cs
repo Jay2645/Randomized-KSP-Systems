@@ -41,9 +41,8 @@ namespace RandomizedSystems.Persistence
 				CopyPersistenceFileFromSystems (persistence, newSeed);
 				// Load the game
 				HighLogic.CurrentGame = GamePersistence.LoadGame ("persistent", HighLogic.SaveFolder, true, false);
-				/* Do we need to start?
-				 * HighLogic.CurrentGame.startScene = GameScenes.FLIGHT;
-				HighLogic.CurrentGame.Start ();*/
+				HighLogic.CurrentGame.startScene = GameScenes.FLIGHT;
+				HighLogic.CurrentGame.Start ();
 			}
 			else
 			{

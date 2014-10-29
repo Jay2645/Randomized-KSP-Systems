@@ -30,7 +30,7 @@ namespace RandomizedSystems
 		{
 			get
 			{
-				if (sun == null)
+				if (sun == null || sun.name.ToLower () == "sun")
 				{
 					return "Kerbol";
 				}

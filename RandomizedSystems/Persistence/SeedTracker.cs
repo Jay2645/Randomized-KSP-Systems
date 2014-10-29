@@ -30,23 +30,15 @@ namespace RandomizedSystems.Persistence
 			{
 				string appPath = KSPUtil.ApplicationRootPath;
 				string addonFolder = "";
-				while (!string.IsNullOrEmpty(appPath) && addonFolder == "")
+				if (Directory.Exists (appPath))
 				{
-					if (Directory.Exists (appPath))
+					string[] allDirectories = Directory.GetDirectories (appPath);
+					foreach (string directory in allDirectories)
 					{
-						string[] allDirectories = Directory.GetDirectories (appPath);
-						foreach (string directory in allDirectories)
+						if (Path.GetFileName (directory).ToLower () == "gamedata")
 						{
-							if (Path.GetFileName (directory).ToLower () == "gamedata")
-							{
-								addonFolder = directory;
-							}
+							addonFolder = directory;
 						}
-					}
-					if (addonFolder == "")
-					{
-						// Shorten the path name
-						appPath = Path.GetDirectoryName (appPath);
 					}
 				}
 				addonFolder = Path.Combine (addonFolder, "RandomizedSystems");

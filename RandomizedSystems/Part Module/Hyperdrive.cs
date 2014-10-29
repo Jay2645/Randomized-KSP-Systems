@@ -44,9 +44,15 @@ namespace RandomizedSystems
 		/// </summary>
 		public void JumpToKerbol ()
 		{
+			CelestialBody reference = FlightGlobals.currentMainBody;
+			if (reference.referenceBody.name != reference.name)
+			{
+				ScreenMessages.PostScreenMessage ("Warp Drive cannot be activated. Please enter orbit around the nearest star.", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+				return;
+			}
+			lastSeed = seedString;
 			seedString = AstroUtils.KERBIN_SYSTEM_COORDS;
 			Warp (true);
-			Events ["JumpToKerbol"].active = false;
 		}
 
 		private void OnDraw ()
@@ -63,25 +69,22 @@ namespace RandomizedSystems
 			seedString = GUILayout.TextField (seedString);
 			if (GUILayout.Button ("Start Warp Drive") || Input.GetKeyDown (KeyCode.Return) || Input.GetKeyDown (KeyCode.KeypadEnter))
 			{
-				seedString = seedString.Replace ("\n", string.Empty);
-				if (!string.IsNullOrEmpty (seedString))
-				{
-					Warp (true);
-				}
-				else
-				{
-					ScreenMessages.PostScreenMessage ("Invalid coordinates.", 3.0f, ScreenMessageStyle.UPPER_CENTER);
-				}
+				Warp (true);
 				RenderingManager.RemoveFromPostDrawQueue (0, OnDraw);
 			}
 			GUILayout.EndVertical ();
-
 			GUI.DragWindow ();
 		}
 
 		private void Warp (bool showMessage)
 		{
 			SolarData system = null;
+			seedString = seedString.Replace ("\n", string.Empty);
+			if (string.IsNullOrEmpty (seedString))
+			{
+				ScreenMessages.PostScreenMessage ("Invalid coordinates.", 3.0f, ScreenMessageStyle.UPPER_CENTER);
+				return;
+			}
 			try
 			{
 				system = SolarData.CreateSystem (seedString);
