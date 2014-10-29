@@ -53,7 +53,6 @@
     <Compile Include="Persistence\PersistenceGenerator.cs" />
     <Compile Include="Persistence\SaveGameRecovery.cs" />
     <Compile Include="Persistence\SeedTracker.cs" />
-    <Compile Include="Part Module\HyperdriveWarper.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

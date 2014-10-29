@@ -51,7 +51,7 @@ namespace RandomizedSystems.Randomizers
 
 		public override void Randomize ()
 		{
-			if (HyperdriveWarper.seedString == AstroUtils.KERBIN_SYSTEM_COORDS)
+			if (Hyperdrive.seedString == AstroUtils.KERBIN_SYSTEM_COORDS)
 			{
 				return;
 			}

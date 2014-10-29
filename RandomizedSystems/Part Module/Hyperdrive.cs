@@ -1,20 +1,22 @@
 using UnityEngine;
 using RandomizedSystems.Persistence;
-using System;
 
 namespace RandomizedSystems
 {
 	public class Hyperdrive : PartModule
 	{
+		private Rect windowPosition;
+		public static int seed = 0;
+		public static string seedString = AstroUtils.KERBIN_SYSTEM_COORDS;
+		private string lastSeed = string.Empty;
 		public static bool hasInit = false;
 
 		public override void OnStart (StartState state)
 		{
 			if (!hasInit && state != StartState.Editor && state != StartState.None)
 			{
-				HyperdriveWarper.SetSeed (AstroUtils.KERBIN_SYSTEM_COORDS);
-				// This caches the Kerbin system
-				HyperdriveWarper.Warp (false, Warp);
+				seedString = AstroUtils.KERBIN_SYSTEM_COORDS;
+				Warp (false);
 				hasInit = true;
 			}
 		}
@@ -25,14 +27,15 @@ namespace RandomizedSystems
 		/// </summary>
 		public void StartHyperspaceJump ()
 		{
-			// Can only warp around the sun
 			CelestialBody reference = FlightGlobals.currentMainBody;
 			if (reference.referenceBody.name != reference.name)
 			{
 				ScreenMessages.PostScreenMessage ("Warp Drive cannot be activated. Please enter orbit around the nearest star.", 5.0f, ScreenMessageStyle.UPPER_CENTER);
 				return;
 			}
-			HyperdriveWarper.OpenWindow ();
+			windowPosition = new Rect (100, 100, 0, 0);
+			lastSeed = seedString;
+			RenderingManager.AddToPostDrawQueue (0, OnDraw);
 		}
 
 		[KSPEvent(guiActive = true, guiName = "Return to Kerbol", active = false)]
@@ -41,25 +44,66 @@ namespace RandomizedSystems
 		/// </summary>
 		public void JumpToKerbol ()
 		{
-			CelestialBody reference = FlightGlobals.currentMainBody;
-			if (reference.referenceBody.name != reference.name)
-			{
-				ScreenMessages.PostScreenMessage ("Warp Drive cannot be activated. Please enter orbit around the nearest star.", 5.0f, ScreenMessageStyle.UPPER_CENTER);
-				return;
-			}
-			HyperdriveWarper.SetSeed (AstroUtils.KERBIN_SYSTEM_COORDS);
-			HyperdriveWarper.Warp (true, Warp);
+			seedString = AstroUtils.KERBIN_SYSTEM_COORDS;
+			Warp (true);
+			Events ["JumpToKerbol"].active = false;
 		}
 
-		private void Warp ()
+		private void OnDraw ()
 		{
-			if (HyperdriveWarper.seedString == AstroUtils.KERBIN_SYSTEM_COORDS)
+			if (this.vessel == FlightGlobals.ActiveVessel)
 			{
-				Events ["JumpToKerbol"].active = false;
+				windowPosition = GUILayout.Window (10, windowPosition, OnWindow, "Enter Hyperspace Coordinates");
 			}
-			else
+		}
+
+		private void OnWindow (int windowID)
+		{
+			GUILayout.BeginVertical (GUILayout.Width (250.0f));
+			seedString = GUILayout.TextField (seedString);
+			if (GUILayout.Button ("Start Warp Drive") || Input.GetKeyDown (KeyCode.Return) || Input.GetKeyDown (KeyCode.KeypadEnter))
 			{
-				Events ["JumpToKerbol"].active = true;
+				Warp (true);
+				RenderingManager.RemoveFromPostDrawQueue (0, OnDraw);
+			}
+			GUILayout.EndVertical ();
+
+			GUI.DragWindow ();
+		}
+
+		private void Warp (bool showMessage)
+		{
+			SolarData system = null;
+			seedString = seedString.Replace ("\n", string.Empty);
+			if (string.IsNullOrEmpty (seedString))
+			{
+				ScreenMessages.PostScreenMessage ("Invalid coordinates.", 3.0f, ScreenMessageStyle.UPPER_CENTER);
+			}
+			try
+			{
+				system = SolarData.CreateSystem (seedString);
+				PersistenceGenerator.CreatePersistenceFile (lastSeed, seedString);
+				SeedTracker.Jump ();
+			}
+			catch (System.Exception e)
+			{
+				// Catch all exceptions so users know if something goes wrong
+				ScreenMessages.PostScreenMessage ("Warp Drive failed due to " + e.GetType () + ".");
+				Debugger.LogException ("Unable to jump to system!", e);
+				return;
+			}
+			Debugger.LogWarning ("Created system " + system.name + " from string " + seedString + ".");
+			if (showMessage)
+			{
+				ScreenMessages.PostScreenMessage ("Warp Drive initialized. Traveling to the " + system.name + " system, at coordinates " + seedString + ".", 3.0f, ScreenMessageStyle.UPPER_CENTER);
+				if (seedString == AstroUtils.KERBIN_SYSTEM_COORDS)
+				{
+					Events ["JumpToKerbol"].active = false;
+				}
+				else
+				{
+					Events ["JumpToKerbol"].active = true;
+				}
 			}
 		}
 	}
