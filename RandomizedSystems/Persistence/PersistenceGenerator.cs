@@ -1,6 +1,7 @@
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
+using System;
 
 namespace RandomizedSystems.Persistence
 {
@@ -35,31 +36,47 @@ namespace RandomizedSystems.Persistence
 			}
 			// Save a snapshot of our current game to Star Systems just before we jump
 			GamePersistence.SaveGame (oldSeed + "_persistent", Path.Combine (HighLogic.SaveFolder, "Star Systems"), SaveMode.OVERWRITE);
+			// Get all the vessels
+			Vessel[] allVessels = FlightGlobals.Vessels.ToArray ();
+			foreach (Vessel v in allVessels)
+			{
+				// Destroy them all
+				// We're not in this list anymore, so don't worry about us!
+				HighLogic.CurrentGame.DestroyVessel (v);
+				v.DestroyVesselComponents ();
+			}
+			// Check to see if we already have a persistence file for this system
 			if (SystemPersistenceExists (persistence, newSeed))
 			{
-				// Copy over the "old" persistence file and delete the cached version in Star Systems
-				CopyPersistenceFileFromSystems (persistence, newSeed);
 				// Load the game
-				HighLogic.CurrentGame = GamePersistence.LoadGame ("persistent", HighLogic.SaveFolder, true, false);
-				HighLogic.CurrentGame.startScene = GameScenes.FLIGHT;
-				HighLogic.CurrentGame.Start ();
+				// We don't actually have to load the WHOLE game, just the vessels
+				string path = Path.Combine (KSPUtil.ApplicationRootPath, "saves");
+				path = Path.Combine (path, HighLogic.SaveFolder);
+				path = Path.Combine (path, "Star Systems");
+				path = Path.Combine (path, newSeed + "_persistent.sfs");
+				// Generate root node from persistence file
+				ConfigNode root = ConfigNode.Load (path).GetNode ("GAME");
+				// Find FLIGHTSTATE node in the root node
+				ConfigNode flightStateNode = root.GetNode ("FLIGHTSTATE");
+				// Generate new FlightState from the root
+				FlightState flightState = new FlightState (flightStateNode, HighLogic.CurrentGame);
+				// Load all the ProtoVessels into the game proper
+				// (This part drove me nuts)
+				foreach (ProtoVessel vessel in flightState.protoVessels)
+				{
+					vessel.Load (flightState);
+				}
+				// Reset the current FlightState
+				HighLogic.CurrentGame.flightState = flightState;
 			}
 			else
 			{
-				// Get all the vessels
-				Vessel[] allVessels = FlightGlobals.Vessels.ToArray ();
-				foreach (Vessel v in allVessels)
-				{
-					// Destroy them all
-					// We're not in this list anymore, so don't worry about us!
-					HighLogic.CurrentGame.DestroyVessel (v);
-					v.DestroyVesselComponents ();
-				}
+				// Create a blank FlightState for the new system
+				HighLogic.CurrentGame.flightState = new FlightState ();
 			}
 			// Add us back to the active vessel list
 			FlightGlobals.Vessels.Add (ourVessel);
-			// Create a blank FlightState for the new system
-			HighLogic.CurrentGame.flightState = new FlightState ();
+			FlightGlobals.ForceSetActiveVessel (ourVessel);
 			// Save us to the present persistence file
 			GamePersistence.SaveGame ("persistent", HighLogic.SaveFolder, SaveMode.OVERWRITE);
 		}
@@ -115,36 +132,6 @@ namespace RandomizedSystems.Persistence
 				return File.Exists (Path.Combine (persistenceDirectory, persistenceFilename));
 			}
 			return false;
-		}
-
-		public static void CopyPersistenceFileFromSystems (string persistence, string prefix)
-		{
-			try
-			{
-				// Find the persistence directory
-				string persistenceDirectory = Path.GetDirectoryName (persistence);
-				// Navigate to the star systems subfolder
-				persistenceDirectory = Path.Combine (persistenceDirectory, "Star Systems");
-				// Generate our filename
-				string persistenceFilename = prefix + "_" + Path.GetFileName (persistence);
-				// Add our filename to the combined path
-				string combinedPath = Path.Combine (persistenceDirectory, persistenceFilename);
-				if (!File.Exists (combinedPath))
-				{
-					// Make sure we exist
-					Debugger.LogException ("", new IOException ("Cannot copy persistence file over because Star Systems file does not exist!"));
-					return;
-				}
-				byte[] cachedBytes = File.ReadAllBytes (combinedPath);
-				// Delete the cached file, since we don't need it anymore
-				File.Delete (combinedPath);
-				// Copy over the filepath found in systems
-				File.WriteAllBytes (persistence, cachedBytes);
-			}
-			catch (IOException e)
-			{
-				Debugger.LogException ("Could not copy from Star Systems!", e);
-			}
 		}
 	}
 }

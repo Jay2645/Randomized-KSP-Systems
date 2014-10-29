@@ -12,7 +12,7 @@ namespace RandomizedSystems.Persistence
 			{
 				FindConfig ();
 			}
-			File.WriteAllText (cfgFile, Hyperdrive.seedString);
+			File.WriteAllText (cfgFile, HyperdriveWarper.seedString);
 		}
 
 		public static string LastSeed ()

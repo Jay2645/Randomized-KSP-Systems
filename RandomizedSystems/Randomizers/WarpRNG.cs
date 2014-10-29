@@ -117,27 +117,27 @@ namespace RandomizedSystems.Randomizers
 		/// </summary>
 		private static void Seed ()
 		{
-			if (string.IsNullOrEmpty (Hyperdrive.seedString))
+			if (string.IsNullOrEmpty (HyperdriveWarper.seedString))
 			{
 				// Can't seed
 				return;
 			}
 			// Reset the index if we exceed the string length
-			if (index >= Hyperdrive.seedString.Length)
+			if (index >= HyperdriveWarper.seedString.Length)
 			{
 				index = 0;
 			}
 			// We convert the next character in the seed string to an int
-			int nextValue = (int)Hyperdrive.seedString [index];
-			if (int.MaxValue - nextValue <= Hyperdrive.seed)
+			int nextValue = (int)HyperdriveWarper.seedString [index];
+			if (int.MaxValue - nextValue <= HyperdriveWarper.seed)
 			{
 				// Very unlikely to ever happen, but better safe than sorry
-				Hyperdrive.seed = 0;
+				HyperdriveWarper.seed = 0;
 			}
 			// Add the char's value to the seed
-			Hyperdrive.seed += nextValue;
+			HyperdriveWarper.seed += nextValue;
 			// Seed the RNG
-			Random.seed = Hyperdrive.seed;
+			Random.seed = HyperdriveWarper.seed;
 			// Increment the index
 			index++;
 		}
