@@ -1,25 +1,27 @@
 ﻿<Properties>
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="RandomizedSystems/Persistence/PersistenceGenerator.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="RandomizedSystems/SolarData.cs">
     <Files>
-      <File FileName="RandomizedSystems/Randomizers/WarpRNG.cs" Line="140" Column="28" />
+      <File FileName="RandomizedSystems/Randomizers/WarpRNG.cs" Line="146" Column="53" />
       <File FileName="RandomizedSystems/PlanetData.cs" Line="1" Column="1" />
       <File FileName="RandomizedSystems/Randomizers/OrbitRandomizer.cs" Line="1" Column="1" />
       <File FileName="RandomizedSystems/Randomizers/AtmosphereRandomizer.cs" Line="1" Column="1" />
-      <File FileName="RandomizedSystems/SolarData.cs" Line="33" Column="53" />
+      <File FileName="RandomizedSystems/SolarData.cs" Line="28" Column="22" />
       <File FileName="RandomizedSystems/AstroUtils.cs" Line="1" Column="1" />
       <File FileName="RandomizedSystems/Randomizers/GeneralRandomizer.cs" Line="1" Column="1" />
       <File FileName="RandomizedSystems/Randomizers/PlanetRandomizer.cs" Line="1" Column="1" />
       <File FileName="RandomizedSystems/Randomizers/GeologicalRandomizer.cs" Line="1" Column="1" />
-      <File FileName="RandomizedSystems/Part Module/Hyperdrive.cs" Line="106" Column="6" />
-      <File FileName="RandomizedSystems/Debugger/Debugger.cs" Line="37" Column="50" />
-      <File FileName="RandomizedSystems/Persistence/PersistenceGenerator.cs" Line="46" Column="33" />
-      <File FileName="RandomizedSystems/Persistence/SaveGameRecovery.cs" Line="1" Column="1" />
+      <File FileName="RandomizedSystems/Part Module/Hyperdrive.cs" Line="95" Column="77" />
+      <File FileName="RandomizedSystems/Debugger/Debugger.cs" Line="12" Column="61" />
       <File FileName="RandomizedSystems/Persistence/SeedTracker.cs" Line="23" Column="5" />
     </Files>
     <Pads>
       <Pad Id="ProjectPad">
-        <State />
+        <State expanded="True">
+          <Node name="RandomizedSystems" expanded="True">
+            <Node name="SolarData.cs" selected="True" />
+          </Node>
+        </State>
       </Pad>
     </Pads>
   </MonoDevelop.Ide.Workbench>

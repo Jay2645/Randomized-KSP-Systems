@@ -50,11 +50,15 @@
     <Compile Include="AstroUtils.cs" />
     <Compile Include="Randomizers\GeneralRandomizer.cs" />
     <Compile Include="Debugger\Debugger.cs" />
+    <Compile Include="Persistence\PersistenceGenerator.cs" />
+    <Compile Include="Persistence\SaveGameRecovery.cs" />
+    <Compile Include="Persistence\SeedTracker.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
     <Folder Include="Part Module\" />
     <Folder Include="Randomizers\" />
     <Folder Include="Debugger\" />
+    <Folder Include="Persistence\" />
   </ItemGroup>
 </Project>
