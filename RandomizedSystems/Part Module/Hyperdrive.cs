@@ -8,17 +8,13 @@ namespace RandomizedSystems
 		private Rect windowPosition;
 		public static int seed = 0;
 		public static string seedString = AstroUtils.KERBIN_SYSTEM_COORDS;
-		private string lastSeed = AstroUtils.KERBIN_SYSTEM_COORDS;
+		private string lastSeed = string.Empty;
 		public static bool hasInit = false;
 
 		public override void OnStart (StartState state)
 		{
 			if (!hasInit && state != StartState.Editor && state != StartState.None)
 			{
-				if (seedString == AstroUtils.KERBIN_SYSTEM_COORDS)
-				{
-					Events ["JumpToKerbol"].active = false;
-				}
 				seedString = AstroUtils.KERBIN_SYSTEM_COORDS;
 				Warp (false);
 				hasInit = true;
@@ -48,10 +44,8 @@ namespace RandomizedSystems
 		/// </summary>
 		public void JumpToKerbol ()
 		{
-			string tempString = seedString;
 			seedString = AstroUtils.KERBIN_SYSTEM_COORDS;
 			Warp (true);
-			seedString = tempString;
 			Events ["JumpToKerbol"].active = false;
 		}
 
@@ -67,9 +61,10 @@ namespace RandomizedSystems
 		{
 			GUILayout.BeginVertical (GUILayout.Width (250.0f));
 			seedString = GUILayout.TextField (seedString);
-			if (GUILayout.Button ("Start Warp Drive"))
+			if (GUILayout.Button ("Start Warp Drive") || Input.GetKeyDown (KeyCode.Return) || Input.GetKeyDown (KeyCode.KeypadEnter))
 			{
-				if (seedString != "")
+				seedString = seedString.Replace ("\n", string.Empty);
+				if (!string.IsNullOrEmpty (seedString) && !string.IsNullOrWhiteSpace (seedString))
 				{
 					Warp (true);
 				}
@@ -90,8 +85,16 @@ namespace RandomizedSystems
 			try
 			{
 				system = SolarData.CreateSystem (seedString);
-				SeedTracker.Jump ();
 				PersistenceGenerator.CreatePersistenceFile (lastSeed, seedString);
+				SeedTracker.Jump ();
+				if (seedString == AstroUtils.KERBIN_SYSTEM_COORDS)
+				{
+					Events ["JumpToKerbol"].active = false;
+				}
+				else
+				{
+					Events ["JumpToKerbol"].active = true;
+				}
 			}
 			catch (System.Exception e)
 			{
@@ -104,10 +107,6 @@ namespace RandomizedSystems
 			if (showMessage)
 			{
 				ScreenMessages.PostScreenMessage ("Warp Drive initialized. Traveling to the " + system.name + " system, at coordinates " + seedString + ".", 3.0f, ScreenMessageStyle.UPPER_CENTER);
-			}
-			if (seedString != AstroUtils.KERBIN_SYSTEM_COORDS)
-			{
-				Events ["JumpToKerbol"].active = true;
 			}
 		}
 	}

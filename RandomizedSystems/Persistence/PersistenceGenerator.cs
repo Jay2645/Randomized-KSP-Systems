@@ -1,5 +1,6 @@
 using System.IO;
 using System.Text.RegularExpressions;
+using System.Collections.Generic;
 
 namespace RandomizedSystems.Persistence
 {
@@ -10,67 +11,87 @@ namespace RandomizedSystems.Persistence
 	{
 		public static void CreatePersistenceFile (string oldSeed, string newSeed)
 		{
+			if (string.IsNullOrEmpty (oldSeed))
+			{
+				return;
+			}
+			Vessel ourVessel = FlightGlobals.ActiveVessel;
+			if (ourVessel == null)
+			{
+				return;
+			}
+			// We remove the active vessel so it doesn't get written to the "last" system
+			// It should jump out of the current system
+			// We don't destroy the vessel "normally" because that would also destroy all parts
+			FlightGlobals.Vessels.Remove (ourVessel);
+			// Reset the flight state to flush the ProtoVessels
+			HighLogic.CurrentGame.flightState = new FlightState ();
+			// Save the game to a new persistence file
 			string persistence = FindPersistenceFile ();
 			if (string.IsNullOrEmpty (persistence))
 			{
 				Debugger.LogError ("Could not find persistence file!");
 				return;
 			}
-			// Copy over our current persistence file to the solar systems
-			// We now have no "live" file
-			CopyPersistenceFileToSystems (persistence, oldSeed);
-			try
-			{
-				File.Delete (persistence);
-			}
-			catch (IOException e)
-			{
-				Debugger.LogException ("Could not delete persistence file!", e);
-				return;
-			}
+			// Save a snapshot of our current game to Star Systems just before we jump
+			GamePersistence.SaveGame (oldSeed + "_persistent", Path.Combine (HighLogic.SaveFolder, "Star Systems"), SaveMode.OVERWRITE);
 			if (SystemPersistenceExists (persistence, newSeed))
 			{
-				// If we have a persistence file for this system, copy it to our current persistence file
+				// Copy over the "old" persistence file and delete the cached version in Star Systems
 				CopyPersistenceFileFromSystems (persistence, newSeed);
+				// Load the game
+				HighLogic.CurrentGame = GamePersistence.LoadGame ("persistent", HighLogic.SaveFolder, true, false);
+				/* Do we need to start?
+				 * HighLogic.CurrentGame.startScene = GameScenes.FLIGHT;
+				HighLogic.CurrentGame.Start ();*/
 			}
 			else
 			{
-				// If we don't have a persistence file for this system, strip our current persistence file and use that
-				/*string output = Regex.Replace (File.ReadAllText (persistence), "(\t\tVESSEL)(.)*?(\n\t\t})", string.Empty, RegexOptions.Multiline);
-				File.WriteAllText (persistence, output);
-				CopyPersistenceFileToSystems (persistence, newSeed, true);*/
+				// Get all the vessels
+				Vessel[] allVessels = FlightGlobals.Vessels.ToArray ();
+				foreach (Vessel v in allVessels)
+				{
+					// Destroy them all
+					// We're not in this list anymore, so don't worry about us!
+					HighLogic.CurrentGame.DestroyVessel (v);
+					v.DestroyVesselComponents ();
+				}
 			}
+			// Add us back to the active vessel list
+			FlightGlobals.Vessels.Add (ourVessel);
+			// Create a blank FlightState for the new system
+			HighLogic.CurrentGame.flightState = new FlightState ();
+			// Save us to the present persistence file
+			GamePersistence.SaveGame ("persistent", HighLogic.SaveFolder, SaveMode.OVERWRITE);
 		}
 
+		/// <summary>
+		/// Looks for a persistence file ("persistent.sfs") in the current save folder.
+		/// </summary>
+		/// <returns>A full path to the persistence file, or an empty string if it was not found.</returns>
 		public static string FindPersistenceFile ()
 		{
 			try
 			{
 				string appPath = KSPUtil.ApplicationRootPath;
 				string saveFolder = "";
-				while (!string.IsNullOrEmpty(appPath) && saveFolder == "")
+				string[] allDirectories = Directory.GetDirectories (appPath);
+				foreach (string directory in allDirectories)
 				{
-					if (Directory.Exists (appPath))
+					if (Path.GetFileName (directory).ToLower () == "saves")
 					{
-						string[] allDirectories = Directory.GetDirectories (appPath);
-						foreach (string directory in allDirectories)
-						{
-							if (Path.GetFileName (directory).ToLower () == "saves")
-							{
-								saveFolder = directory;
-							}
-						}
-					}
-					if (saveFolder == "")
-					{
-						// Shorten the path name
-						appPath = Path.GetDirectoryName (appPath);
+						saveFolder = directory;
 					}
 				}
 				saveFolder = Path.Combine (saveFolder, HighLogic.SaveFolder);
 				if (Directory.Exists (saveFolder))
 				{
 					string persistence = Path.Combine (saveFolder, "persistent.sfs");
+					string backupFolder = Path.Combine (saveFolder, "Star Systems");
+					if (!Directory.Exists (backupFolder))
+					{
+						Directory.CreateDirectory (backupFolder);
+					}
 					if (File.Exists (persistence))
 					{
 						return persistence;
@@ -114,75 +135,16 @@ namespace RandomizedSystems.Persistence
 					Debugger.LogException ("", new IOException ("Cannot copy persistence file over because Star Systems file does not exist!"));
 					return;
 				}
-				// Make sure persistence does not exist
-				if (File.Exists (persistence))
-				{
-					File.Delete (persistence);
-				}
-				// Copy over the filepath found in systems
-				File.Copy (combinedPath, persistence);
-				// Create the live file
-				string livePath = Path.Combine (combinedPath, "Live");
-				Directory.CreateDirectory (livePath);
-				livePath = Path.Combine (livePath, persistenceFilename);
-				// Get rid of anything in there
-				if (File.Exists (livePath))
-				{
-					File.Delete (livePath);
-				}
-				// Copy over the live file
-				File.Copy (combinedPath, livePath);
-				// Delete the live file from the cached folder
+				byte[] cachedBytes = File.ReadAllBytes (combinedPath);
+				// Delete the cached file, since we don't need it anymore
 				File.Delete (combinedPath);
+				// Copy over the filepath found in systems
+				File.WriteAllBytes (persistence, cachedBytes);
 			}
 			catch (IOException e)
 			{
 				Debugger.LogException ("Could not copy from Star Systems!", e);
 			}
 		}
-
-		public static void CopyPersistenceFileToSystems (string persistence, string prefix)
-		{
-			CopyPersistenceFileToSystems (persistence, prefix, false);
-		}
-
-		public static void CopyPersistenceFileToSystems (string persistence, string prefix, bool live)
-		{
-			try
-			{
-				string persistenceDirectory = Path.GetDirectoryName (persistence);
-				persistenceDirectory = Path.Combine (persistenceDirectory, "Star Systems");
-				Directory.CreateDirectory (persistenceDirectory);
-				string persistenceFilename = prefix + "_" + Path.GetFileName (persistence);
-				string combinedPath = Path.Combine (persistenceDirectory, persistenceFilename);
-				if (File.Exists (combinedPath))
-				{
-					File.Delete (combinedPath);
-				}
-				File.Copy (persistence, combinedPath);
-				// Delete the directory and all live files in it, since they are no longer live
-				string livePath = Path.Combine (combinedPath, "Live");
-				if (Directory.Exists (livePath))
-				{
-					Directory.Delete (livePath);
-				}
-				if (live)
-				{
-					//...Unless the current persistence file is actually live
-					Directory.CreateDirectory (livePath);
-					livePath = Path.Combine (livePath, persistenceFilename);
-					if (File.Exists (livePath))
-					{
-						File.Delete (livePath);
-					}
-					File.Copy (persistence, livePath);
-				}
-			}
-			catch (IOException e)
-			{
-				Debugger.LogException ("Could not copy to Star Systems!", e);
-			}
-		}
 	}
 }
-
