@@ -86,6 +86,7 @@ namespace RandomizedSystems
 			SolarData system = null;
 			try
 			{
+				Randomizers.WarpRNG.ReSeed (seedString);
 				system = SolarData.CreateSystem (seedString);
 			}
 			catch (System.Exception e)
