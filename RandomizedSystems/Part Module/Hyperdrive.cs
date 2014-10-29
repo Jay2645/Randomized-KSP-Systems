@@ -64,7 +64,7 @@ namespace RandomizedSystems
 			if (GUILayout.Button ("Start Warp Drive") || Input.GetKeyDown (KeyCode.Return) || Input.GetKeyDown (KeyCode.KeypadEnter))
 			{
 				seedString = seedString.Replace ("\n", string.Empty);
-				if (!string.IsNullOrEmpty (seedString) && !string.IsNullOrWhiteSpace (seedString))
+				if (!string.IsNullOrEmpty (seedString))
 				{
 					Warp (true);
 				}

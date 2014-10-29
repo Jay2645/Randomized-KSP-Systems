@@ -81,6 +81,7 @@ namespace RandomizedSystems.Persistence
 					if (Path.GetFileName (directory).ToLower () == "saves")
 					{
 						saveFolder = directory;
+						break;
 					}
 				}
 				saveFolder = Path.Combine (saveFolder, HighLogic.SaveFolder);
