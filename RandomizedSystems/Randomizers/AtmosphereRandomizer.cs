@@ -64,7 +64,8 @@ namespace RandomizedSystems.Randomizers
 			}
 			if (hasAtmosphere)
 			{
-				value = WarpRNG.GetValue ();
+                value = WarpRNG.GetValue();
+                // 10% chance if atmosphere the atmosphere has oxygen
 				if (value >= 0.9f)
 				{
 					hasOxygen = true;
