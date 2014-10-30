@@ -1,5 +1,6 @@
 using UnityEngine;
 using System;
+using RandomizedSystems.WarpDrivers;
 
 namespace RandomizedSystems.Randomizers
 {
@@ -146,27 +147,27 @@ namespace RandomizedSystems.Randomizers
 		[Obsolete("Slow. Use ReSeed() instead.")]
 		private static void Seed ()
 		{
-			if (string.IsNullOrEmpty (Hyperdrive.seedString))
+			if (string.IsNullOrEmpty (WarpDrive.seedString))
 			{
 				// Can't seed
 				return;
 			}
 			// Reset the index if we exceed the string length
-			if (index >= Hyperdrive.seedString.Length)
+			if (index >= WarpDrive.seedString.Length)
 			{
 				index = 0;
 			}
 			// We convert the next character in the seed string to an int
-			int nextValue = (int)Hyperdrive.seedString [index];
-			if (int.MaxValue - nextValue <= Hyperdrive.seed)
+			int nextValue = (int)WarpDrive.seedString [index];
+			if (int.MaxValue - nextValue <= WarpDrive.seed)
 			{
 				// Very unlikely to ever happen, but better safe than sorry
-				Hyperdrive.seed = 0;
+				WarpDrive.seed = 0;
 			}
 			// Add the char's value to the seed
-			Hyperdrive.seed += nextValue;
+			WarpDrive.seed += nextValue;
 			// Seed the RNG
-			UnityEngine.Random.seed = Hyperdrive.seed;
+			UnityEngine.Random.seed = WarpDrive.seed;
 			// Increment the index
 			index++;
 		}

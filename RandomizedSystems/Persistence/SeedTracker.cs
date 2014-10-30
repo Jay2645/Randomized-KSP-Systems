@@ -1,4 +1,5 @@
 using System.IO;
+using RandomizedSystems.WarpDrivers;
 
 namespace RandomizedSystems.Persistence
 {
@@ -12,7 +13,7 @@ namespace RandomizedSystems.Persistence
 			{
 				FindConfig ();
 			}
-			File.WriteAllText (cfgFile, Hyperdrive.seedString);
+			File.WriteAllText (cfgFile, WarpDrive.seedString);
 		}
 
 		public static string LastSeed ()

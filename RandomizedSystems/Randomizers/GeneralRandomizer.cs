@@ -34,7 +34,7 @@ namespace RandomizedSystems.Randomizers
 
 		private void RandomizeName ()
 		{
-			if (randomizedName || Hyperdrive.seedString == AstroUtils.KERBIN_SYSTEM_COORDS)
+			if (randomizedName || WarpDrivers.WarpDrive.seedString == AstroUtils.KERBIN_SYSTEM_COORDS)
 			{
 				return;
 			}

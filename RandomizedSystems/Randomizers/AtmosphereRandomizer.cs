@@ -51,7 +51,7 @@ namespace RandomizedSystems.Randomizers
 
 		public override void Randomize ()
 		{
-			if (Hyperdrive.seedString == AstroUtils.KERBIN_SYSTEM_COORDS)
+			if (WarpDrivers.WarpDrive.seedString == AstroUtils.KERBIN_SYSTEM_COORDS)
 			{
 				return;
 			}
@@ -64,8 +64,8 @@ namespace RandomizedSystems.Randomizers
 			}
 			if (hasAtmosphere)
 			{
-                value = WarpRNG.GetValue();
-                // 10% chance if atmosphere the atmosphere has oxygen
+				value = WarpRNG.GetValue ();
+				// 10% chance if atmosphere the atmosphere has oxygen
 				if (value >= 0.9f)
 				{
 					hasOxygen = true;

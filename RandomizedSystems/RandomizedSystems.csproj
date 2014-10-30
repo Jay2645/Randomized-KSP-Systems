@@ -53,6 +53,7 @@
     <Compile Include="Persistence\PersistenceGenerator.cs" />
     <Compile Include="Persistence\SaveGameRecovery.cs" />
     <Compile Include="Persistence\SeedTracker.cs" />
+    <Compile Include="Warp Drive\WarpDrive.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -61,5 +62,6 @@
     <Folder Include="Debugger\" />
     <Folder Include="Persistence\" />
     <Folder Include="Space Center\" />
+    <Folder Include="Warp Drive\" />
   </ItemGroup>
 </Project>
