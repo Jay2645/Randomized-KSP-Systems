@@ -60,5 +60,6 @@
     <Folder Include="Randomizers\" />
     <Folder Include="Debugger\" />
     <Folder Include="Persistence\" />
+    <Folder Include="Space Center\" />
   </ItemGroup>
 </Project>
