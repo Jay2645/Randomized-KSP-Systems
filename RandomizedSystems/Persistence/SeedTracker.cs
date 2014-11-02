@@ -5,7 +5,7 @@ namespace RandomizedSystems.Persistence
 {
 	public static class SeedTracker
 	{
-		private static string cfgFile = "";
+		private static string cfgFile = string.Empty;
 
 		public static void Jump ()
 		{

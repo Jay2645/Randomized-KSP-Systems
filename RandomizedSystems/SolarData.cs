@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using RandomizedSystems.Vessels;
 
 namespace RandomizedSystems
 {
@@ -21,6 +22,27 @@ namespace RandomizedSystems
 		/// The PlanetData corresponding with the sun.
 		/// </summary>
 		public PlanetData sunData = null;
+		public static SolarData currentSystem;
+		private VesselManager vesselManager;
+		public bool debug = false;
+
+		public FlightState flightState
+		{
+			get
+			{
+				return HighLogic.CurrentGame.flightState;
+			}
+			set
+			{
+				HighLogic.CurrentGame.flightState = value;
+				// Create a VesselManager from the FlightState
+				vesselManager = new VesselManager (HighLogic.CurrentGame.flightState);
+				// Load the ProtoVessels
+				vesselManager.LoadAllProtoVessels ();
+			}
+		}
+
+		private const string KERBOL_NAME = "Sun";
 
 		/// <summary>
 		/// Gets the name of this solar system.
@@ -177,6 +199,8 @@ namespace RandomizedSystems
 			{
 				solarSystem [i].ApplyChanges ();
 			}
+			vesselManager = new VesselManager (flightState);
+			currentSystem = this;
 		}
 
 		private void SortSystem ()
@@ -312,20 +336,21 @@ namespace RandomizedSystems
 				solarSystem = solarSystems [seed];
 				solarSystem.ApplySystem ();
 			}
-			else if (seed != AstroUtils.KERBIN_SYSTEM_COORDS)
+			else if (seed == AstroUtils.KERBIN_SYSTEM_COORDS && 
+				FindSun ().name == KERBOL_NAME)
 			{
-				solarSystem = new SolarData (seed);
+				solarSystem = new SolarData ();
 			}
 			else
 			{
-				solarSystem = new SolarData ();
+				solarSystem = new SolarData (seed);
 			}
 			return solarSystem;
 		}
 
 		private static CelestialBody FindSun ()
 		{
-			CelestialBody currentBody = FlightGlobals.currentMainBody;
+			CelestialBody currentBody = FlightGlobals.getMainBody ();
 			while (currentBody.referenceBody.name != currentBody.name)
 			{
 				currentBody = currentBody.referenceBody;

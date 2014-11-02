@@ -347,10 +347,16 @@ namespace RandomizedSystems.Randomizers
 		{
 			if (!IsSun ())
 			{
-				Debugger.Log ("Sphere of influence: " + sphereOfInfluence + " meters (" + (sphereOfInfluence / AstroUtils.KERBIN_SOI) + " times Kerbin SOI)");
+				if (solarSystem.debug)
+				{
+					Debugger.Log ("Sphere of influence: " + sphereOfInfluence + " meters (" + (sphereOfInfluence / AstroUtils.KERBIN_SOI) + " times Kerbin SOI)");
+				}
 				planet.sphereOfInfluence = sphereOfInfluence;
 			}
-			Debugger.Log ("Gravity: " + (gravity / AstroUtils.KERBIN_GRAVITY) + " times Kerbin gravity.");
+			if (solarSystem.debug)
+			{
+				Debugger.Log ("Gravity: " + (gravity / AstroUtils.KERBIN_GRAVITY) + " times Kerbin gravity.");
+			}
 			planet.gravParameter = gravity;
 			if (orbitDriver != null)
 			{
@@ -375,7 +381,7 @@ namespace RandomizedSystems.Randomizers
 			return data;
 		}
 
-		private static Orbit CreateOrbit (OrbitData data, Orbit orbit)
+		private Orbit CreateOrbit (OrbitData data, Orbit orbit)
 		{
 			return CreateOrbit (data.inclination,
 			                    data.eccentricity, 
@@ -389,16 +395,16 @@ namespace RandomizedSystems.Randomizers
 			                    data.referenceBody);
 		}
 
-		private static Orbit CreateOrbit (double inclination,
-		                                  double eccentricity,
-		                                  double semiMajorAxis, 
-		                                  double longitudeAscendingNode, 
-		                                  double argumentOfPeriapsis, 
-		                                  double meanAnomalyAtEpoch, 
-		                                  double epoch, 
-		                                  double period,
-		                                  Orbit orbit,
-		                                  CelestialBody referenceBody)
+		private Orbit CreateOrbit (double inclination,
+		                           double eccentricity,
+		                           double semiMajorAxis, 
+		                           double longitudeAscendingNode, 
+		                           double argumentOfPeriapsis, 
+		                           double meanAnomalyAtEpoch, 
+		                           double epoch, 
+		                           double period,
+		                           Orbit orbit,
+		                           CelestialBody referenceBody)
 		{
 			if (double.IsNaN (inclination))
 			{
@@ -456,24 +462,26 @@ namespace RandomizedSystems.Randomizers
 				// Cannot proceed with setting orbit
 				return orbit;
 			}
-
-			Debugger.Log ("Reference Body: " + referenceBody);
+			if (solarSystem.debug)
+			{
+				Debugger.Log ("Reference Body: " + referenceBody);
+				Debugger.Log ("Inclination: " + inclination);
+				Debugger.Log ("Eccentricity: " + eccentricity);
+				Debugger.Log ("Semi-Major Axis: " + semiMajorAxis + " (" + (semiMajorAxis / AstroUtils.KERBIN_SOI) + " Kerbin Astronomical Units)");
+				Debugger.Log ("Longitude of Ascending Node: " + longitudeAscendingNode);
+				Debugger.Log ("Argument of Periapsis: " + argumentOfPeriapsis);
+				Debugger.Log ("Mean Anomaly at Epoch: " + meanAnomalyAtEpoch);
+				Debugger.Log ("Epoch: " + epoch);
+				Debugger.Log ("Period: " + period + " seconds (" + (period / 9203545) + " years)");
+			}
 			orbit.referenceBody = referenceBody;
-			Debugger.Log ("Inclination: " + inclination);
 			orbit.inclination = inclination;
-			Debugger.Log ("Eccentricity: " + eccentricity);
 			orbit.eccentricity = eccentricity;
-			Debugger.Log ("Semi-Major Axis: " + semiMajorAxis + " (" + (semiMajorAxis / AstroUtils.KERBIN_SOI) + " Kerbin Astronomical Units)");
 			orbit.semiMajorAxis = semiMajorAxis;
-			Debugger.Log ("Longitude of Ascending Node: " + longitudeAscendingNode);
 			orbit.LAN = longitudeAscendingNode;
-			Debugger.Log ("Argument of Periapsis: " + argumentOfPeriapsis);
 			orbit.argumentOfPeriapsis = argumentOfPeriapsis;
-			Debugger.Log ("Mean Anomaly at Epoch: " + meanAnomalyAtEpoch);
 			orbit.meanAnomalyAtEpoch = meanAnomalyAtEpoch;
-			Debugger.Log ("Epoch: " + epoch);
 			orbit.epoch = epoch;
-			Debugger.Log ("Period: " + period + " seconds (" + (period / 9203545) + " years)");
 			orbit.period = period;
 			return orbit;
 		}

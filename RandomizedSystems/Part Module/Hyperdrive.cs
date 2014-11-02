@@ -5,6 +5,11 @@ namespace RandomizedSystems
 {
 	public class Hyperdrive : PartModule
 	{
+		public override void OnActive ()
+		{
+			ResetKerbolPrompt ();
+		}
+
 		[KSPEvent(guiActive = true, guiName = "Start Warp Drive")]
 		/// <summary>
 		/// Starts the hyperspace jump.
@@ -28,7 +33,7 @@ namespace RandomizedSystems
 		public void JumpToKerbol ()
 		{
 			WarpDrive.SetNextWarpAction (new WarpDrive.OnWarpDelegate (WarpMessage), new WarpDrive.OnWarpDelegate (ResetKerbolPrompt));
-			WarpDrive.JumpToKerbol ();
+			WarpDrive.JumpToKerbol (true);
 		}
 
 		private void WarpMessage ()

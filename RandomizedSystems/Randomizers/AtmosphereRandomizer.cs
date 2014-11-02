@@ -85,14 +85,17 @@ namespace RandomizedSystems.Randomizers
 
 		public override void Apply ()
 		{
-			Debugger.Log ("Atmosphere: " + hasAtmosphere);
-			if (hasAtmosphere)
+			if (solarSystem.debug)
 			{
-				Debugger.Log ("Oxygen: " + hasOxygen);
-				Debugger.Log ("Atmosphere height: " + (atmosphereHeight * Mathf.Log (1000000.0f)) + " kilometers.");
-				Debugger.Log ("Pressure multiplier: " + atmospherePressureMult);
-				Debugger.Log ("Temperature multiplier: " + tempMultiplier);
-				Debugger.Log ("Ambient color: " + ambientColor);
+				Debugger.Log ("Atmosphere: " + hasAtmosphere);
+				if (hasAtmosphere)
+				{
+					Debugger.Log ("Oxygen: " + hasOxygen);
+					Debugger.Log ("Atmosphere height: " + (atmosphereHeight * Mathf.Log (1000000.0f)) + " kilometers.");
+					Debugger.Log ("Pressure multiplier: " + atmospherePressureMult);
+					Debugger.Log ("Temperature multiplier: " + tempMultiplier);
+					Debugger.Log ("Ambient color: " + ambientColor);
+				}
 			}
 			planet.atmosphere = hasAtmosphere;
 			planet.atmosphereContainsOxygen = hasOxygen;

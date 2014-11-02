@@ -257,12 +257,15 @@ namespace RandomizedSystems
 
 		public void ApplyChanges ()
 		{
-			string output = "Planet: " + generalRandomizer.GetName (false);
-			if (IsSun ())
+			if (solarSystem.debug)
 			{
-				output = "Star: " + generalRandomizer.GetName (false);
+				string output = "Planet: " + generalRandomizer.GetName (false);
+				if (IsSun ())
+				{
+					output = "Star: " + generalRandomizer.GetName (false);
+				}
+				Debugger.LogWarning (output);
 			}
-			Debugger.LogWarning (output);
 			foreach (PlanetRandomizer randomizer in allRandomizers)
 			{
 				randomizer.Apply ();

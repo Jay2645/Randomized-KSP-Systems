@@ -2,6 +2,8 @@ using System.IO;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using System;
+using RandomizedSystems.Vessels;
+using RandomizedSystems.WarpDrivers;
 
 namespace RandomizedSystems.Persistence
 {
@@ -10,40 +12,68 @@ namespace RandomizedSystems.Persistence
 	/// </summary>
 	public static class PersistenceGenerator
 	{
-		public static void CreatePersistenceFile (string oldSeed, string newSeed)
+		public static void CreatePersistenceFile (string oldSeed, string newSeed, bool removeVesselFromSystem = true)
 		{
-			if (string.IsNullOrEmpty (oldSeed))
+			if (string.IsNullOrEmpty (oldSeed) || oldSeed == newSeed)
 			{
 				return;
 			}
 			Vessel ourVessel = FlightGlobals.ActiveVessel;
 			if (ourVessel == null)
 			{
+				removeVesselFromSystem = false;
+			}
+			if (removeVesselFromSystem)
+			{
+				// We remove the active vessel so it doesn't get written to the "last" system
+				// It should jump out of the current system
+				// We don't destroy the vessel "normally" because that would also destroy all parts
+				FlightGlobals.Vessels.Remove (ourVessel);
+				// Reset the flight state to flush the ProtoVessels
+				HighLogic.CurrentGame.flightState = new FlightState ();
+				Game game = HighLogic.CurrentGame.Updated ();
+				// Save a snapshot of our current game to Star Systems just before we jump
+				GamePersistence.SaveGame (game, oldSeed + "_persistent", Path.Combine (HighLogic.SaveFolder, "Star Systems"), SaveMode.OVERWRITE);
+			}
+			else
+			{
+				// We can use the snapshot, which will reliably get *all* the vessels
+				SaveSnapshot (oldSeed);
+			}
+			// Merge in all the other vessels
+			MergePersistenceVessels (newSeed);
+			if (removeVesselFromSystem)
+			{
+				// Add us back to the active vessel list
+				FlightGlobals.Vessels.Add (ourVessel);
+				FlightGlobals.ForceSetActiveVessel (ourVessel);
+			}
+			// Ensure that everyone is on the same page
+
+			// Save us to the present persistence file
+			SavePersistence ();
+		}
+
+		public static void MergePersistenceVessels (string newSeed)
+		{
+			if (newSeed == AstroUtils.KERBIN_SYSTEM_COORDS && !WarpDrivers.WarpDrive.needsPurge)
+			{
+				// Don't need to merge, we never left Kerbol
 				return;
 			}
-			// We remove the active vessel so it doesn't get written to the "last" system
-			// It should jump out of the current system
-			// We don't destroy the vessel "normally" because that would also destroy all parts
-			FlightGlobals.Vessels.Remove (ourVessel);
-			// Reset the flight state to flush the ProtoVessels
-			HighLogic.CurrentGame.flightState = new FlightState ();
-			// Save the game to a new persistence file
 			string persistence = FindPersistenceFile ();
 			if (string.IsNullOrEmpty (persistence))
 			{
 				Debugger.LogError ("Could not find persistence file!");
 				return;
 			}
-			// Save a snapshot of our current game to Star Systems just before we jump
-			GamePersistence.SaveGame (oldSeed + "_persistent", Path.Combine (HighLogic.SaveFolder, "Star Systems"), SaveMode.OVERWRITE);
 			// Get all the vessels
 			Vessel[] allVessels = FlightGlobals.Vessels.ToArray ();
 			foreach (Vessel v in allVessels)
 			{
+				Debugger.Log ("Clearing " + v.vesselName);
 				// Destroy them all
-				// We're not in this list anymore, so don't worry about us!
-				HighLogic.CurrentGame.DestroyVessel (v);
-				v.DestroyVesselComponents ();
+				VesselManager.RemoveVesselFromSystem (v);
 			}
 			// Check to see if we already have a persistence file for this system
 			if (SystemPersistenceExists (persistence, newSeed))
@@ -59,26 +89,19 @@ namespace RandomizedSystems.Persistence
 				// Find FLIGHTSTATE node in the root node
 				ConfigNode flightStateNode = root.GetNode ("FLIGHTSTATE");
 				// Generate new FlightState from the root
-				FlightState flightState = new FlightState (flightStateNode, HighLogic.CurrentGame);
-				// Load all the ProtoVessels into the game proper
-				// (This part drove me nuts)
-				foreach (ProtoVessel vessel in flightState.protoVessels)
+				SolarData.currentSystem.flightState = new FlightState (flightStateNode, HighLogic.CurrentGame);
+				if (newSeed == AstroUtils.KERBIN_SYSTEM_COORDS)
 				{
-					vessel.Load (flightState);
+					// We've now purged the system of all the "old" data
+					WarpDrivers.WarpDrive.needsPurge = false;
 				}
-				// Reset the current FlightState
-				HighLogic.CurrentGame.flightState = flightState;
 			}
 			else
 			{
 				// Create a blank FlightState for the new system
 				HighLogic.CurrentGame.flightState = new FlightState ();
 			}
-			// Add us back to the active vessel list
-			FlightGlobals.Vessels.Add (ourVessel);
-			FlightGlobals.ForceSetActiveVessel (ourVessel);
-			// Save us to the present persistence file
-			GamePersistence.SaveGame ("persistent", HighLogic.SaveFolder, SaveMode.OVERWRITE);
+			SavePersistence ();
 		}
 
 		/// <summary>
@@ -132,6 +155,80 @@ namespace RandomizedSystems.Persistence
 				return File.Exists (Path.Combine (persistenceDirectory, persistenceFilename));
 			}
 			return false;
+		}
+
+		/// <summary>
+		/// Loads a snapshot.
+		/// Will warp to the desired seed, remove all vessels from the entire game, then reload only those in the new snapshot.
+		/// </summary>
+		/// <param name="seed">Seed.</param>
+		public static void LoadSnapshot (string seed)
+		{
+			WarpDrive.Warp (false, seed);
+			Vessel[] allVessels = (Vessel[])UnityEngine.Object.FindObjectsOfType<Vessel> ();
+			foreach (Vessel v in allVessels)
+			{
+				VesselManager.RemoveVesselFromSystem (v);
+			}
+			SavePersistence ();
+			MergePersistenceVessels (seed);
+		}
+
+		/// <summary>
+		/// Saves a snapshot of the current system exactly as it is.
+		/// This is the most reliable way of capturing everything in the system.
+		/// </summary>
+		/// <param name="seed">The seed to save the snapshot as.</param>
+		public static void SaveSnapshot (string seed)
+		{
+			Debugger.Log ("Saving snapshot: " + seed);
+			SaveGame (seed + "_persistent", "Star Systems");
+		}
+
+		public static void SavePersistence ()
+		{
+			Debugger.Log ("Saving persistence.");
+			SaveGame ("persistent");
+		}
+
+		private static void SaveGame (string filename, string subfolder = "")
+		{
+			// Expand subfolder
+			if (subfolder == "")
+			{
+				subfolder = HighLogic.SaveFolder;
+			}
+			else
+			{
+				subfolder = Path.Combine (HighLogic.SaveFolder, subfolder);
+			}
+			// Make sure everyone is on the same page
+			Vessel[] allVessels = UnityEngine.Object.FindObjectsOfType<Vessel> ();
+			Debugger.Log ("Saving game. Vessel count: " + allVessels.Length);
+			foreach (Vessel vessel in allVessels)
+			{
+				// This will add us to FlightGlobals.Vessels if we are not in it already
+				VesselManager.EnsureInLoadedVessels (vessel);
+			}
+			VesselManager.EnsureUniqueVessels ();
+			Debugger.Log ("FlightGlobals vessel count: " + FlightGlobals.Vessels.Count);
+			Game savedGame = HighLogic.CurrentGame.Updated ();
+			Debugger.Log ("Known ProtoVessels:");
+			foreach (ProtoVessel protoVessel in HighLogic.CurrentGame.flightState.protoVessels)
+			{
+				Debugger.LogWarning ("ProtoVessel: " + protoVessel.vesselName);
+			}
+			GamePersistence.SaveGame (savedGame, filename, subfolder, SaveMode.OVERWRITE);
+			// This is a hacky way to force the tracking station to update
+			try
+			{
+				GameEvents.onNewVesselCreated.Fire (null);
+			}
+			catch (NullReferenceException)
+			{
+				// Intentionally left blank
+			}
+			Debugger.LogWarning ("PersistenceGenerator has saved game as " + filename);
 		}
 	}
 }

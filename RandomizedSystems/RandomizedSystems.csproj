@@ -54,6 +54,8 @@
     <Compile Include="Persistence\SaveGameRecovery.cs" />
     <Compile Include="Persistence\SeedTracker.cs" />
     <Compile Include="Warp Drive\WarpDrive.cs" />
+    <Compile Include="Space Center\KSCReturn.cs" />
+    <Compile Include="Vessels\VesselManager.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -63,5 +65,6 @@
     <Folder Include="Persistence\" />
     <Folder Include="Space Center\" />
     <Folder Include="Warp Drive\" />
+    <Folder Include="Vessels\" />
   </ItemGroup>
 </Project>
