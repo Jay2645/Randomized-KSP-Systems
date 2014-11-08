@@ -1,7 +1,7 @@
 using UnityEngine;
 using RandomizedSystems.WarpDrivers;
 
-namespace RandomizedSystems
+namespace RandomizedSystems.Parts
 {
 	public class Hyperdrive : PartModule
 	{

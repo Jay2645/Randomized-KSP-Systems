@@ -50,12 +50,14 @@
     <Compile Include="AstroUtils.cs" />
     <Compile Include="Randomizers\GeneralRandomizer.cs" />
     <Compile Include="Debugger\Debugger.cs" />
-    <Compile Include="Persistence\PersistenceGenerator.cs" />
-    <Compile Include="Persistence\SaveGameRecovery.cs" />
-    <Compile Include="Persistence\SeedTracker.cs" />
     <Compile Include="Warp Drive\WarpDrive.cs" />
     <Compile Include="Space Center\KSCReturn.cs" />
     <Compile Include="Vessels\VesselManager.cs" />
+    <Compile Include="Vessels\PersistentVessel.cs" />
+    <Compile Include="Save Games\SaveOnPause.cs" />
+    <Compile Include="Save Games\PersistenceGenerator.cs" />
+    <Compile Include="Save Games\SeedTracker.cs" />
+    <Compile Include="Save Games\SaveGameRecovery.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -66,5 +68,6 @@
     <Folder Include="Space Center\" />
     <Folder Include="Warp Drive\" />
     <Folder Include="Vessels\" />
+    <Folder Include="Save Games\" />
   </ItemGroup>
 </Project>

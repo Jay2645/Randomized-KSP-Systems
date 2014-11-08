@@ -171,6 +171,17 @@ namespace RandomizedSystems.Randomizers
 			// Increment the index
 			index++;
 		}
+
+		/// <summary>
+		/// Generates a random number that follows a normal distribution, using a Box–Muller transform.
+		/// </summary>
+		/// <returns>A random number following a normal distribution.</returns>
+		public static double GenerateNormalRandom ()
+		{
+			double valueOne = GetValueDouble ();
+			double valueTwo = GetValueDouble ();
+			return Math.Sqrt (-2 * Math.Log (valueOne)) * Math.Cos (2 * Math.PI * valueTwo);
+		}
 	}
 }
 

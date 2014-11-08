@@ -23,7 +23,6 @@ namespace RandomizedSystems
 		/// </summary>
 		public PlanetData sunData = null;
 		public static SolarData currentSystem;
-		private VesselManager vesselManager;
 		public bool debug = false;
 
 		public FlightState flightState
@@ -35,10 +34,6 @@ namespace RandomizedSystems
 			set
 			{
 				HighLogic.CurrentGame.flightState = value;
-				// Create a VesselManager from the FlightState
-				vesselManager = new VesselManager (HighLogic.CurrentGame.flightState);
-				// Load the ProtoVessels
-				vesselManager.LoadAllProtoVessels ();
 			}
 		}
 
@@ -199,7 +194,6 @@ namespace RandomizedSystems
 			{
 				solarSystem [i].ApplyChanges ();
 			}
-			vesselManager = new VesselManager (flightState);
 			currentSystem = this;
 		}
 

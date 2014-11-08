@@ -50,7 +50,7 @@ namespace RandomizedSystems
 		/// <returns>The orbital period from the semi-major axis.</returns>
 		public static double CalculatePeriodFromSemiMajorAxis (double semiMajorAxis)
 		{
-			double periodSquared = (4 * piSquared * (Math.Pow ((semiMajorAxis / KERBAL_ASTRONOMICAL_UNIT * 2.0f), 3))) / GRAV_CONSTANT;
+			double periodSquared = (4 * piSquared * (Math.Pow ((semiMajorAxis / KERBAL_ASTRONOMICAL_UNIT * 5.0f), 3))) / GRAV_CONSTANT;
 			double output = Math.Abs (Math.Sqrt (periodSquared));
 			return output;
 		}
@@ -156,7 +156,7 @@ namespace RandomizedSystems
 			// This is the "old" formula and may not be perfect
 			if (double.IsNaN (sphereOfInfluence) || body.IsMoon () && sphereOfInfluence > 0.15)
 			{
-				Debugger.LogWarning ("Tossing SOI for " + body.name + ": " + sphereOfInfluence + ". Gravity: " + gravityMult);
+				//Debugger.LogWarning ("Tossing SOI for " + body.name + ": " + sphereOfInfluence + ". Gravity: " + gravityMult);
 				sphereOfInfluence = body.planet.Radius * 1.5;
 				if (body.IsMoon ())
 				{

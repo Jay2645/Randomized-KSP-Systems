@@ -178,7 +178,7 @@ namespace RandomizedSystems.Randomizers
 			#endregion
 			#region Inclination
 			// Inclination starts directly at orbital plane
-			int inclination = 0;
+			/*int inclination = 0;
 			// Get new random value
 			value = WarpRNG.GetValue ();
 			if (value >= 0.975f)
@@ -215,8 +215,20 @@ namespace RandomizedSystems.Randomizers
 			{
 				// 10% chance of a 0 inclination orbit
 				inclination = 0;
+			}*/
+			// New way uses normal distribution
+			double normalRNG = WarpRNG.GenerateNormalRandom ();
+			// Standard deviation of 30
+			double normalInc = normalRNG * 30.0;
+			if (normalInc < 0)
+			{
+				// Make sure we're not below 0
+				// Remember that the number will be negative, so we should add
+				normalInc = 360 + normalInc;
 			}
-			orbitData.inclination = inclination;
+			// Make sure the value wraps between 0 and 360
+			float clampedValue = Mathf.Clamp ((float)normalInc, 0.0f, 360.0f);
+			orbitData.inclination = Mathf.RoundToInt (clampedValue);
 			#endregion
 			#region Eccentricity
 			// Eccentricity must be a value between 0 and 0.99

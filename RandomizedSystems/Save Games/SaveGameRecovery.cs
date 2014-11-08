@@ -1,26 +1,8 @@
 using UnityEngine;
 using System.IO;
 
-namespace RandomizedSystems.Persistence
+namespace RandomizedSystems.SaveGames
 {
-	[KSPAddon(KSPAddon.Startup.SpaceCentre, false)]
-	public class SaveGameRecoveryKSC : MonoBehaviour
-	{
-		protected void Awake ()
-		{
-			string persistenceFilePath = PersistenceGenerator.FindPersistenceFile ();
-			if (PersistenceGenerator.SystemPersistenceExists (persistenceFilePath, AstroUtils.KERBIN_SYSTEM_COORDS))
-			{
-				// Did not clean up properly last time we jumped
-				string lastSeed = SeedTracker.LastSeed ();
-				if (!string.IsNullOrEmpty (lastSeed) && lastSeed != AstroUtils.KERBIN_SYSTEM_COORDS)
-				{
-					//PersistenceGenerator.CreatePersistenceFile (lastSeed, AstroUtils.KERBIN_SYSTEM_COORDS);
-				}
-			}
-		}
-	}
-
 	[KSPAddon(KSPAddon.Startup.MainMenu, false)]
 	public class SaveGameRecoveryMainMenu : MonoBehaviour
 	{
@@ -56,14 +38,17 @@ namespace RandomizedSystems.Persistence
 				}
 				foreach (string directory in Directory.GetDirectories(saveFolder))
 				{
-					// Look in each save folder for a persistence file
-					string persistence = Path.Combine (directory, "persistent.sfs");
-					if (File.Exists (persistence))
+					string thisSave = Path.GetDirectoryName (saveFolder);
+					string lastSeed = SeedTracker.LastSeed (thisSave);
+					if (lastSeed == AstroUtils.KERBIN_SYSTEM_COORDS)
 					{
 						// Everything is okay!
 						continue;
 					}
+					Debugger.LogWarning ("Attempting recovery for save folder " + thisSave);
 					// We're in trouble here
+					// Look in each save folder for a persistence file
+					string persistence = Path.Combine (directory, "persistent.sfs");
 					string systemFolder = Path.Combine (directory, "Star Systems");
 					// Look for the Kerbin save
 					string kerbinSave = AstroUtils.KERBIN_SYSTEM_COORDS + "_persistent.sfs";
@@ -71,11 +56,12 @@ namespace RandomizedSystems.Persistence
 					if (File.Exists (stockSaveGame))
 					{
 						// Found it!
+						Debugger.Log ("Found Kerbol persistence file!");
 						File.WriteAllBytes (persistence, File.ReadAllBytes (stockSaveGame));
 						continue;
 					}
 					// Really in trouble now
-					string liveFolder = Path.Combine (systemFolder, "Live");
+					/*string liveFolder = Path.Combine (systemFolder, "Live");
 					if (Directory.Exists (liveFolder))
 					{
 						string liveSaveGame = Path.Combine (liveFolder, kerbinSave);
@@ -85,9 +71,9 @@ namespace RandomizedSystems.Persistence
 							File.WriteAllBytes (persistence, File.ReadAllBytes (liveSaveGame));
 							continue;
 						}
-					}
-					// Nothing we can do; save data has been lost. :(
-					Debugger.LogError ("Lost save data for directory " + directory + ". :(");
+					}*/
+					// Nothing we can do. We'll have to keep the default persistence file if we have one.
+					Debugger.LogWarning ("Going to keep default persistence for " + directory + ".");
 				}
 			}
 			catch (IOException e)

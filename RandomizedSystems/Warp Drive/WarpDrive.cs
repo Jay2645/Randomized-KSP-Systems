@@ -1,4 +1,4 @@
-using RandomizedSystems.Persistence;
+using RandomizedSystems.SaveGames;
 using UnityEngine;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
@@ -67,8 +67,8 @@ namespace RandomizedSystems.WarpDrivers
 		public static void JumpToKerbol (bool processActions, bool removeVesselFromSystem = true)
 		{
 			currentSeed = AstroUtils.KERBIN_SYSTEM_COORDS;
-			Warp (processActions, currentSeed);
-			PersistenceGenerator.CreatePersistenceFile (lastSeed, seedString, removeVesselFromSystem);
+			Warp (processActions, currentSeed, false);
+			PersistenceGenerator.LoadSnapshotVessels (lastSeed, seedString, removeVesselFromSystem);
 		}
 
 		private static void OnDraw ()
@@ -97,8 +97,8 @@ namespace RandomizedSystems.WarpDrivers
 			if (GUILayout.Button ("Start Warp Drive") || Input.GetKeyDown (KeyCode.Return) || Input.GetKeyDown (KeyCode.KeypadEnter))
 			{
 				// User has hit the button or pressed enter
-				Warp (true, currentSeed);
-				PersistenceGenerator.CreatePersistenceFile (lastSeed, seedString, true);
+				Warp (true, currentSeed, false);
+				PersistenceGenerator.LoadSnapshotVessels (lastSeed, seedString, true);
 				RenderingManager.RemoveFromPostDrawQueue (0, OnDraw);
 			}
 			GUILayout.EndVertical ();
@@ -119,8 +119,7 @@ namespace RandomizedSystems.WarpDrivers
 		/// <summary>
 		/// Warps to the current seed.
 		/// </summary>
-		/// <param name="removeVesselFromSystem">If set to <c>true</c>, the active vessel will be removed from the current system.</param>
-		public static void Warp (bool processActions, string theSeed)
+		public static void Warp (bool processActions, string theSeed, bool savePersistence = true)
 		{
 			Debugger.Log ("Beginning warp to " + theSeed);
 			// Replace any newline or tab characters.
@@ -165,6 +164,10 @@ namespace RandomizedSystems.WarpDrivers
 				}
 				// Clear the list of methods
 				nextWarpActions.Clear ();
+			}
+			if (savePersistence)
+			{
+				PersistenceGenerator.SavePersistence ();
 			}
 			Debugger.Log ("All post-warp actions done.");
 		}
