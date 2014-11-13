@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System;
 using RandomizedSystems.Randomizers;
 
-namespace RandomizedSystems
+namespace RandomizedSystems.Systems
 {
 	public class PlanetData
 	{
@@ -185,15 +185,21 @@ namespace RandomizedSystems
 			{
 				if (generalRandomizer == null)
 				{
-					return string.Empty;
+					return _name;
 				}
 				return generalRandomizer.GetName (true);
 			}
 			set
 			{
-				generalRandomizer.name = value;
+				if (generalRandomizer != null)
+				{
+					generalRandomizer.name = value;
+				}
+				_name = value;
 			}
 		}
+
+		private string _name;
 
 		public List<CelestialBody> childBodies
 		{
@@ -238,7 +244,10 @@ namespace RandomizedSystems
 			// From here we add our randomizers
 			orbitRandomizer = new OrbitRandomizer (planet, this);
 			geologicalRandomizer = new GeologicalRandomizer (planet, this);
-			generalRandomizer = new GeneralRandomizer (planet, this);
+			if (IsSun ())
+			{
+				generalRandomizer = new GeneralRandomizer (planet, this);
+			}
 			atmosphereRandomizer = new AtmosphereRandomizer (planet, this);
 
 			foreach (PlanetRandomizer randomizer in allRandomizers)
@@ -253,17 +262,20 @@ namespace RandomizedSystems
 			{
 				randomizer.Randomize ();
 			}
+			SystemNamer.RegisterPlanet (this);
 		}
 
 		public void ApplyChanges ()
 		{
+			SystemNamer.NameBody (this);
 			if (solarSystem.debug)
 			{
-				string output = "Planet: " + generalRandomizer.GetName (false);
+				string output = "Planet: " + name;
 				if (IsSun ())
 				{
-					output = "Star: " + generalRandomizer.GetName (false);
+					output = "Star: " + name;
 				}
+				output += ", ID: " + planetID;
 				Debugger.LogWarning (output);
 			}
 			foreach (PlanetRandomizer randomizer in allRandomizers)

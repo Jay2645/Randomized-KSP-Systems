@@ -1,6 +1,7 @@
 using UnityEngine;
 using System;
 using RandomizedSystems.Randomizers;
+using RandomizedSystems.Systems;
 
 namespace RandomizedSystems
 {
@@ -9,15 +10,26 @@ namespace RandomizedSystems
 	/// </summary>
 	public static class AstroUtils
 	{
+		/// <summary>
+		/// Mass of Earth's sun (for expressing calculations in solar masses)
+		/// </summary>
+		public const double SOLAR_MASS = 1.9891e30;
+		public const double EARTH_YEAR_IN_SECONDS = 3.15569e7;
+		public const double EARTH_ASTRONOMICAL_UNIT = 149597870700;
+		public const double KERBAL_ASTRONOMICAL_UNIT = 13599840256;
+		public const double KERBIN_YEAR_IN_SECONDS = 9203545;
 		public const double KERBIN_SOI = 84159286.0;
 		public const double KERBIN_MASS = 5.2915793e22;
 		public const double MAX_SEMI_MAJOR_AXIS = 90118820000;
 		public const double KERBIN_GRAVITY = 3531600000000.0;
-		public const double KERBAL_ASTRONOMICAL_UNIT = 13599840256;
 		public const double KERBIN_RADIUS = 600000;
-		public const double GRAV_CONSTANT = 6.673e-11;
+		public const double GRAV_CONSTANT = 6.673e-1;
 		public const double MUN_SOI = 2429559.1;
 		public const string KERBIN_SYSTEM_COORDS = "0";
+		public const string STAR_SYSTEM_FOLDER_NAME = "Star Systems";
+		public const string SEED_PERSISTENCE = "_persistent";
+		public const string DEFAULT_PERSISTENCE = "persistent";
+		public const string SFS = ".sfs";
 
 		public static double piSquared
 		{
@@ -39,20 +51,25 @@ namespace RandomizedSystems
 			return mass / radiusSquared;
 		}
 
+		public static double MassInSolarMasses (double mass)
+		{
+			return mass / SOLAR_MASS;
+		}
+
 		/// <summary>
 		/// Calcluates orbital period using Kepler's Third Law.
-		/// T^2 = (4 pi^2 a^3)/G
+		/// T^2 = (4 pi^2 * a^3)/G
 		/// T: Orbital period
-		/// m: Solar mass
 		/// a: semi-major axis
 		/// G: Newtonian gravitational constant
 		/// </summary>
 		/// <returns>The orbital period from the semi-major axis.</returns>
-		public static double CalculatePeriodFromSemiMajorAxis (double semiMajorAxis)
+		public static double CalculatePeriodFromSemiMajorAxis (double semiMajorAxis, double massOne, double massTwo)
 		{
-			double periodSquared = (4 * piSquared * (Math.Pow ((semiMajorAxis / KERBAL_ASTRONOMICAL_UNIT * 5.0f), 3))) / GRAV_CONSTANT;
-			double output = Math.Abs (Math.Sqrt (periodSquared));
-			return output;
+			double gravity = GRAV_CONSTANT * (massOne + massTwo);
+			double fourPiSquared = 4 * piSquared;
+			double semiMajorAxisCubed = Math.Pow ((semiMajorAxis / EARTH_ASTRONOMICAL_UNIT), 3);
+			return Math.Sqrt ((fourPiSquared * semiMajorAxisCubed) / gravity) * EARTH_YEAR_IN_SECONDS;
 		}
 
 		/// <summary>

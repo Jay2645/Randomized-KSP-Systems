@@ -21,8 +21,8 @@ namespace RandomizedSystems.SpaceCenter
 		{
 			if (!FlightDriver.flightStarted && WarpDrive.seedString != AstroUtils.KERBIN_SYSTEM_COORDS)
 			{
-				HighLogic.CurrentGame = GamePersistence.LoadGame (AstroUtils.KERBIN_SYSTEM_COORDS + "_persistent", 
-				                                                  Path.Combine (HighLogic.SaveFolder, "Star Systems"),
+				HighLogic.CurrentGame = GamePersistence.LoadGame (AstroUtils.KERBIN_SYSTEM_COORDS + AstroUtils.SEED_PERSISTENCE, 
+				                                                  Path.Combine (HighLogic.SaveFolder, AstroUtils.STAR_SYSTEM_FOLDER_NAME),
 				                                                  true,
 				                                                  false);
 				HighLogic.CurrentGame.startScene = GameScenes.FLIGHT;

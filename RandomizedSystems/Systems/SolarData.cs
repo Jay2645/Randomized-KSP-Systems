@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using RandomizedSystems.Vessels;
 
-namespace RandomizedSystems
+namespace RandomizedSystems.Systems
 {
 	public class SolarData
 	{
@@ -58,20 +58,6 @@ namespace RandomizedSystems
 			}
 		}
 
-		private string[] romanNumerals = new string[] {
-			"0",
-			"I",
-			"II",
-			"III",
-			"IV",
-			"V",
-			"VI",
-			"VII",
-			"VIII",
-			"IX",
-			"X"
-		};
-
 		/// <summary>
 		/// Gets the total planet count.
 		/// </summary>
@@ -101,10 +87,11 @@ namespace RandomizedSystems
 		/// Initializes a new instance of the <see cref="RandomizedSystems.SolarData"/> class.
 		/// </summary>
 		/// <param name="seed">The seed to use to generate the solar system.</param>
-		public SolarData (string seed)
+		public SolarData (string seed, bool debug = false)
 		{
 			// Set seed
 			this.seed = seed;
+			this.debug = debug;
 			// Make the system
 			CreateSystem ();
 			// Add to lookup
@@ -154,6 +141,7 @@ namespace RandomizedSystems
 			{
 				return;
 			}
+			SystemNamer.moonCount.Clear ();
 			for (int i = 0; i < solarSystem.Count; i++)
 			{
 				solarSystem [i].childBodies = new List<CelestialBody> ();
@@ -161,30 +149,6 @@ namespace RandomizedSystems
 			for (int i = 0; i < solarSystem.Count; i++)
 			{
 				solarSystem [i].RandomizeValues ();
-			}
-			SortSystem ();
-			string systemName = solarSystem [0].name;
-			int systemNameIndex = 98; // "b" in ASCII
-			for (int i = 1; i < solarSystem.Count; i++)
-			{
-				PlanetData planet = solarSystem [i];
-				if (!planet.IsSun () && !planet.IsMoon ())
-				{
-					// Name planets
-					NamePlanet (ref planet, systemName, systemNameIndex);
-					systemNameIndex++;
-					solarSystem [i] = planet;
-				}
-			}
-			for (int i = 1; i < solarSystem.Count; i++)
-			{
-				PlanetData moon = solarSystem [i];
-				if (moon.IsMoon ())
-				{
-					NameMoon (ref moon, moon.referenceBodyData);
-					solarSystem [i] = moon;
-					break;
-				}
 			}
 		}
 
@@ -195,36 +159,6 @@ namespace RandomizedSystems
 				solarSystem [i].ApplyChanges ();
 			}
 			currentSystem = this;
-		}
-
-		private void SortSystem ()
-		{
-			PlanetData[] allPlanets = solarSystem.ToArray ();
-			Quicksort (ref allPlanets, 1, allPlanets.Length - 1);
-			solarSystem = new List<PlanetData> (allPlanets);
-		}
-
-		private void NamePlanet (ref PlanetData planet, string systemName, int systemNameIndex)
-		{
-			planet.name = systemName + " " + ((char)systemNameIndex);
-		}
-
-		private void NameMoon (ref PlanetData moon, PlanetData planet)
-		{
-			solarSystem [planet.planetID].moonCount++;
-			NameMoon (ref moon, planet.name, solarSystem [planet.planetID].moonCount);
-		}
-
-		private void NameMoon (ref PlanetData moon, string planetName, int count)
-		{
-			string name = planetName + " ";
-			while (count >= 10)
-			{
-				name += "X";
-				count -= 10;
-			}
-			name += romanNumerals [count];
-			moon.name = name;
 		}
 
 		/// <summary>
@@ -322,12 +256,13 @@ namespace RandomizedSystems
 		/// </summary>
 		/// <returns>The newly-created system.</returns>
 		/// <param name="seed">The seed to use.</param>
-		public static SolarData CreateSystem (string seed)
+		public static SolarData CreateSystem (string seed, bool debug = false)
 		{
 			SolarData solarSystem = null;
 			if (solarSystems.ContainsKey (seed))
 			{
 				solarSystem = solarSystems [seed];
+				solarSystem.debug = debug;
 				solarSystem.ApplySystem ();
 			}
 			else if (seed == AstroUtils.KERBIN_SYSTEM_COORDS && 
@@ -337,7 +272,7 @@ namespace RandomizedSystems
 			}
 			else
 			{
-				solarSystem = new SolarData (seed);
+				solarSystem = new SolarData (seed, debug);
 			}
 			return solarSystem;
 		}
@@ -350,47 +285,6 @@ namespace RandomizedSystems
 				currentBody = currentBody.referenceBody;
 			}
 			return currentBody;
-		}
-
-		private static void Quicksort (ref PlanetData[] elements, int left, int right)
-		{
-			int i = left, j = right;
-			PlanetData pivot = elements [(left + right) / 2];
-
-			while (i <= j)
-			{
-				while (elements[i].semiMajorAxis < pivot.semiMajorAxis)
-				{
-					i++;
-				}
-
-				while (elements[j].semiMajorAxis > pivot.semiMajorAxis)
-				{
-					j--;
-				}
-
-				if (i <= j)
-				{
-					// Swap
-					PlanetData tmp = elements [i];
-					elements [i] = elements [j];
-					elements [j] = tmp;
-
-					i++;
-					j--;
-				}
-			}
-
-			// Recursive calls
-			if (left < j)
-			{
-				Quicksort (ref elements, left, j);
-			}
-
-			if (i < right)
-			{
-				Quicksort (ref elements, i, right);
-			}
 		}
 	}
 }

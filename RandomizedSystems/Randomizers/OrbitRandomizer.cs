@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using RandomizedSystems.Systems;
 
 namespace RandomizedSystems.Randomizers
 {
@@ -117,7 +118,6 @@ namespace RandomizedSystems.Randomizers
 				// We will be a moon
 				List<int> attemptedInts = new List<int> ();
 				int attempts = 0;
-
 				// Toss out a candidate if any of the following is true:
 				// 1. The reference body is null or us (causes KSP to crash)
 				// 2. The reference body is a moon
@@ -177,63 +177,24 @@ namespace RandomizedSystems.Randomizers
 			gravity = gravityMult * AstroUtils.KERBIN_GRAVITY;
 			#endregion
 			#region Inclination
-			// Inclination starts directly at orbital plane
-			/*int inclination = 0;
-			// Get new random value
-			value = WarpRNG.GetValue ();
-			if (value >= 0.975f)
-			{
-				// 2.5% chance of orbit being between 0 and 180 degrees
-				inclination = WarpRNG.GenerateInt (0, 180);
-			}
-			else if (value >= 0.95f)
-			{
-				// 2.5% chance of orbit being between 0 and 60 degrees
-				inclination = WarpRNG.GenerateInt (0, 60);
-			}
-			else if (value >= 0.925f)
-			{
-				// 2.5% chance of orbit being between 0 and 45 degrees
-				inclination = WarpRNG.GenerateInt (0, 45);
-			}
-			else if (value >= 0.9f)
-			{
-				// 2.5% chance or orbit being between 0 and 25 degrees
-				inclination = WarpRNG.GenerateInt (0, 25);
-			}
-			else if (value >= 0.6f)
-			{
-				// 30% chance of orbit being between 0 and 10 degrees
-				inclination = WarpRNG.GenerateInt (0, 10);
-			}
-			else if (value > 0.1f)
-			{
-				// 50% chance of orbit being between 0 and 5 degrees
-				inclination = WarpRNG.GenerateInt (0, 5);
-			}
-			else
-			{
-				// 10% chance of a 0 inclination orbit
-				inclination = 0;
-			}*/
 			// New way uses normal distribution
 			double normalRNG = WarpRNG.GenerateNormalRandom ();
-			// Standard deviation of 30
-			double normalInc = normalRNG * 30.0;
-			if (normalInc < 0)
-			{
-				// Make sure we're not below 0
-				// Remember that the number will be negative, so we should add
-				normalInc = 360 + normalInc;
-			}
-			// Make sure the value wraps between 0 and 360
-			float clampedValue = Mathf.Clamp ((float)normalInc, 0.0f, 360.0f);
-			orbitData.inclination = Mathf.RoundToInt (clampedValue);
+			double normalInc = normalRNG * 5.0;
+			orbitData.inclination = normalInc;
 			#endregion
 			#region Eccentricity
 			// Eccentricity must be a value between 0 and 0.99
-			double eccentricity = WarpRNG.GetValue ();
-			if (eccentricity == 1)
+			// We prefer low values
+			normalRNG = WarpRNG.GenerateNormalRandom ();
+			// We want to try to clamp the range somewhere between 0 and 0.1, since that produces results most similar to KSP
+			double eccentRNG = normalRNG * 0.01666667;
+			eccentRNG += 0.05;
+			if (eccentRNG < 0)
+			{
+				eccentRNG *= -1.0;
+			}
+			double eccentricity = eccentRNG;
+			/*if (eccentricity == 1)
 			{
 				eccentricity = 0.99;
 			}
@@ -270,7 +231,7 @@ namespace RandomizedSystems.Randomizers
 					// Should never happen
 					eccentricity = 0;
 				}
-			}
+			}*/
 			orbitData.eccentricity = eccentricity;
 			#endregion
 			#region Sphere of Influence
@@ -287,8 +248,22 @@ namespace RandomizedSystems.Randomizers
 			{
 				// Special case: parent is sun
 				// Find Semi-Major Axis in KAU (Kerbin Astronomical Units)
-				// Min is 0.2 (~1.5 solar radii), max is 6.0 (Eeloo orbit)
-				float kerbinSemiMajorAxisMultiplier = WarpRNG.GenerateFloat (0.02f, 6.0f);
+				double kerbinSemiMajorAxisMultiplier = WarpRNG.GenerateNormalRandom ();
+				// Standard deviation of 2
+				kerbinSemiMajorAxisMultiplier *= 2.0;
+				// Center it so it's roughly between 0.2 and 4 times Kerbin's orbit
+				kerbinSemiMajorAxisMultiplier += 3.2;
+				// Now we bias it a little bit (making it technically not a "true" normal distribution, but alas)
+				// Really should use Math.Abs
+				if (kerbinSemiMajorAxisMultiplier < 0)
+				{
+					kerbinSemiMajorAxisMultiplier *= -1.0;
+				}
+				if (kerbinSemiMajorAxisMultiplier < 0.05)
+				{
+					// Don't want to be too close to the sun
+					kerbinSemiMajorAxisMultiplier += 0.05;
+				}
 				semiMajorAxis = kerbinSemiMajorAxisMultiplier * AstroUtils.KERBAL_ASTRONOMICAL_UNIT;
 			}
 			else
@@ -302,7 +277,7 @@ namespace RandomizedSystems.Randomizers
 				}
 				// Semi-Major Axis can be anywhere within the hill sphere of parent body
 				double hillSphere = AstroUtils.CalculateHillSphere (referenceBodyData);
-				double tempMajorAxis = hillSphere * value;
+				double tempMajorAxis = hillSphere * value * 0.5;
 				double parentAtmosphereHeight = planet.Radius + referenceBody.Radius + (referenceBody.atmosphereScaleHeight * 1000.0 * Mathf.Log (1000000.0f));
 				while (tempMajorAxis < parentAtmosphereHeight)
 				{
@@ -351,7 +326,9 @@ namespace RandomizedSystems.Randomizers
 			orbitData.meanAnomalyAtEpoch = meanAnomalyAtEpoch;
 			#endregion
 			#region Period
-			orbitData.period = AstroUtils.CalculatePeriodFromSemiMajorAxis (orbitData.semiMajorAxis);
+			double referenceMass = AstroUtils.MassInSolarMasses (referenceBody.Mass);
+			double usMass = AstroUtils.MassInSolarMasses (planet.Mass);
+			orbitData.period = AstroUtils.CalculatePeriodFromSemiMajorAxis (semiMajorAxis, referenceMass, usMass);
 			#endregion
 		}
 
@@ -479,12 +456,12 @@ namespace RandomizedSystems.Randomizers
 				Debugger.Log ("Reference Body: " + referenceBody);
 				Debugger.Log ("Inclination: " + inclination);
 				Debugger.Log ("Eccentricity: " + eccentricity);
-				Debugger.Log ("Semi-Major Axis: " + semiMajorAxis + " (" + (semiMajorAxis / AstroUtils.KERBIN_SOI) + " Kerbin Astronomical Units)");
+				Debugger.Log ("Semi-Major Axis: " + semiMajorAxis + " (" + (semiMajorAxis / AstroUtils.KERBAL_ASTRONOMICAL_UNIT) + " Kerbin Astronomical Units)");
 				Debugger.Log ("Longitude of Ascending Node: " + longitudeAscendingNode);
 				Debugger.Log ("Argument of Periapsis: " + argumentOfPeriapsis);
 				Debugger.Log ("Mean Anomaly at Epoch: " + meanAnomalyAtEpoch);
 				Debugger.Log ("Epoch: " + epoch);
-				Debugger.Log ("Period: " + period + " seconds (" + (period / 9203545) + " years)");
+				Debugger.Log ("Period: " + period + "(" + (period / AstroUtils.EARTH_YEAR_IN_SECONDS) + " Earth years)");
 			}
 			orbit.referenceBody = referenceBody;
 			orbit.inclination = inclination;

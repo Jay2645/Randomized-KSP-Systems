@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using RandomizedSystems.Systems;
 
 namespace RandomizedSystems.Randomizers
 {
@@ -38,7 +39,7 @@ namespace RandomizedSystems.Randomizers
 			{
 				return;
 			}
-			name = WarpRNG.GenerateName ();
+			name = SystemNamer.GenerateName ();
 			randomizedName = true;
 		}
 

@@ -2,6 +2,7 @@ using RandomizedSystems.SaveGames;
 using UnityEngine;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using RandomizedSystems.Systems;
 
 namespace RandomizedSystems.WarpDrivers
 {
@@ -138,7 +139,7 @@ namespace RandomizedSystems.WarpDrivers
 				// Create the RNG
 				Randomizers.WarpRNG.ReSeed (seedString);
 				// Create and randomize the system
-				SolarData.CreateSystem (seedString);
+				SolarData.CreateSystem (seedString, true);
 				// Write the current seed to file
 				SeedTracker.Jump ();
 			}

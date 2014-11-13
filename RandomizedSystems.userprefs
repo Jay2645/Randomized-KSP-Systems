@@ -1,23 +1,45 @@
 ﻿<Properties>
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="RandomizedSystems/SolarData.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="RandomizedSystems/Systems/SystemNamer.cs">
     <Files>
-      <File FileName="RandomizedSystems/Randomizers/WarpRNG.cs" Line="1" Column="1" />
-      <File FileName="RandomizedSystems/PlanetData.cs" Line="1" Column="1" />
-      <File FileName="RandomizedSystems/Randomizers/OrbitRandomizer.cs" Line="1" Column="1" />
-      <File FileName="RandomizedSystems/Randomizers/AtmosphereRandomizer.cs" Line="1" Column="1" />
-      <File FileName="RandomizedSystems/SolarData.cs" Line="24" Column="3" />
-      <File FileName="RandomizedSystems/AstroUtils.cs" Line="1" Column="1" />
-      <File FileName="RandomizedSystems/Randomizers/GeneralRandomizer.cs" Line="1" Column="1" />
-      <File FileName="RandomizedSystems/Randomizers/PlanetRandomizer.cs" Line="1" Column="1" />
-      <File FileName="RandomizedSystems/Randomizers/GeologicalRandomizer.cs" Line="1" Column="1" />
-      <File FileName="RandomizedSystems/Part Module/Hyperdrive.cs" Line="1" Column="1" />
+      <File FileName="RandomizedSystems/Randomizers/WarpRNG.cs" Line="74" Column="4" />
+      <File FileName="RandomizedSystems/Randomizers/OrbitRandomizer.cs" Line="3" Column="33" />
+      <File FileName="RandomizedSystems/Randomizers/AtmosphereRandomizer.cs" Line="2" Column="33" />
+      <File FileName="RandomizedSystems/AstroUtils.cs" Line="4" Column="33" />
+      <File FileName="RandomizedSystems/Randomizers/GeneralRandomizer.cs" Line="42" Column="22" />
+      <File FileName="RandomizedSystems/Randomizers/PlanetRandomizer.cs" Line="16" Column="3" />
+      <File FileName="RandomizedSystems/Randomizers/GeologicalRandomizer.cs" Line="95" Column="41" />
+      <File FileName="RandomizedSystems/Part Module/Hyperdrive.cs" Line="4" Column="34" />
       <File FileName="RandomizedSystems/Debugger/Debugger.cs" Line="1" Column="1" />
-      <File FileName="RandomizedSystems/Persistence/SeedTracker.cs" Line="1" Column="1" />
+      <File FileName="RandomizedSystems/Save Games/SaveOnPause.cs" Line="20" Column="3" />
+      <File FileName="RandomizedSystems/Save Games/PersistenceGenerator.cs" Line="6" Column="33" />
+      <File FileName="RandomizedSystems/Save Games/SaveGameRecovery.cs" Line="42" Column="44" />
+      <File FileName="RandomizedSystems/Warp Drive/WarpDrive.cs" Line="5" Column="33" />
+      <File FileName="RandomizedSystems/Save Games/SeedTracker.cs" Line="60" Column="56" />
+      <File FileName="RandomizedSystems/Space Center/KSCReturn.cs" Line="8" Column="1" />
+      <File FileName="RandomizedSystems/Vessels/PersistentVessel.cs" Line="126" Column="6" />
+      <File FileName="RandomizedSystems/Vessels/VesselManager.cs" Line="42" Column="30" />
+      <File FileName="RandomizedSystems/Systems/SystemNamer.cs" Line="154" Column="20" />
+      <File FileName="RandomizedSystems/Systems/PlanetData.cs" Line="278" Column="18" />
+      <File FileName="RandomizedSystems/Systems/SolarData.cs" Line="118" Column="22" />
     </Files>
     <Pads>
       <Pad Id="ProjectPad">
-        <State />
+        <State expanded="True">
+          <Node name="RandomizedSystems" expanded="True">
+            <Node name="Debugger" expanded="True" />
+            <Node name="Part Module" expanded="True" />
+            <Node name="Properties" expanded="True" />
+            <Node name="Randomizers" expanded="True" />
+            <Node name="Save Games" expanded="True" />
+            <Node name="Space Center" expanded="True" />
+            <Node name="Systems" expanded="True">
+              <Node name="SystemNamer.cs" selected="True" />
+            </Node>
+            <Node name="Vessels" expanded="True" />
+            <Node name="Warp Drive" expanded="True" />
+          </Node>
+        </State>
       </Pad>
     </Pads>
   </MonoDevelop.Ide.Workbench>

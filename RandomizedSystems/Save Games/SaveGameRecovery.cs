@@ -38,7 +38,7 @@ namespace RandomizedSystems.SaveGames
 				}
 				foreach (string directory in Directory.GetDirectories(saveFolder))
 				{
-					string thisSave = Path.GetDirectoryName (saveFolder);
+					string thisSave = Path.GetFileName (directory);
 					string lastSeed = SeedTracker.LastSeed (thisSave);
 					if (lastSeed == AstroUtils.KERBIN_SYSTEM_COORDS)
 					{
@@ -48,32 +48,32 @@ namespace RandomizedSystems.SaveGames
 					Debugger.LogWarning ("Attempting recovery for save folder " + thisSave);
 					// We're in trouble here
 					// Look in each save folder for a persistence file
-					string persistence = Path.Combine (directory, "persistent.sfs");
-					string systemFolder = Path.Combine (directory, "Star Systems");
+					string persistence = Path.Combine (directory, AstroUtils.DEFAULT_PERSISTENCE + AstroUtils.SFS);
+					string systemFolder = Path.Combine (directory, AstroUtils.STAR_SYSTEM_FOLDER_NAME);
 					// Look for the Kerbin save
-					string kerbinSave = AstroUtils.KERBIN_SYSTEM_COORDS + "_persistent.sfs";
+					string kerbinSave = AstroUtils.KERBIN_SYSTEM_COORDS + AstroUtils.SEED_PERSISTENCE + AstroUtils.SFS;
 					string stockSaveGame = Path.Combine (systemFolder, kerbinSave);
 					if (File.Exists (stockSaveGame))
 					{
 						// Found it!
 						Debugger.Log ("Found Kerbol persistence file!");
+						if (string.IsNullOrEmpty (lastSeed))
+						{
+							Debugger.LogWarning ("Could not save old persistence file because the last seed was null.");
+						}
+						else
+						{
+							// Copy over the current persistence file to the snapshot directory
+							string oldSave = lastSeed + AstroUtils.SEED_PERSISTENCE + AstroUtils.SFS;
+							string seedPath = Path.Combine (systemFolder, oldSave);
+							File.WriteAllBytes (seedPath, File.ReadAllBytes (persistence));
+						}
 						File.WriteAllBytes (persistence, File.ReadAllBytes (stockSaveGame));
+						SeedTracker.CreateConfig (thisSave, AstroUtils.KERBIN_SYSTEM_COORDS);
 						continue;
 					}
-					// Really in trouble now
-					/*string liveFolder = Path.Combine (systemFolder, "Live");
-					if (Directory.Exists (liveFolder))
-					{
-						string liveSaveGame = Path.Combine (liveFolder, kerbinSave);
-						if (File.Exists (liveSaveGame))
-						{
-							// Yay!
-							File.WriteAllBytes (persistence, File.ReadAllBytes (liveSaveGame));
-							continue;
-						}
-					}*/
 					// Nothing we can do. We'll have to keep the default persistence file if we have one.
-					Debugger.LogWarning ("Going to keep default persistence for " + directory + ".");
+					Debugger.LogWarning ("Going to keep default persistence for " + thisSave + ".");
 				}
 			}
 			catch (IOException e)

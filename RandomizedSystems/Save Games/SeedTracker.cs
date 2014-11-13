@@ -1,5 +1,5 @@
 using System.IO;
-using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using RandomizedSystems.WarpDrivers;
 
 namespace RandomizedSystems.SaveGames
@@ -10,7 +10,7 @@ namespace RandomizedSystems.SaveGames
 
 		public static void Jump ()
 		{
-			CreateConfig (WarpDrive.seedString);
+			CreateConfig (HighLogic.SaveFolder, WarpDrive.seedString);
 		}
 
 		public static string LastSeed (string saveFolder)
@@ -21,6 +21,8 @@ namespace RandomizedSystems.SaveGames
 				Debugger.LogError (saveFolder + " had an empty seed!");
 				return string.Empty;
 			}
+			// Replace any newline or tab characters.
+			lastSeed = Regex.Replace (lastSeed, "[^ -~]+", string.Empty, RegexOptions.Multiline);
 			return lastSeed;
 		}
 
@@ -41,7 +43,7 @@ namespace RandomizedSystems.SaveGames
 						}
 					}
 				}
-				addonFolder = Path.Combine (addonFolder, "RandomizedSystems");
+				addonPath = Path.Combine (addonFolder, "RandomizedSystems");
 			}
 			catch (IOException e)
 			{
@@ -49,19 +51,21 @@ namespace RandomizedSystems.SaveGames
 			}
 		}
 
-		private static void CreateConfig (string seed)
+		public static void CreateConfig (string saveFolder, string seed)
 		{
 			if (string.IsNullOrEmpty (addonPath))
 			{
 				FindConfig ();
 			}
-			string saveFolder = HighLogic.SaveFolder;
-			string cfgFile = Path.Combine (addonPath, HighLogic.SaveFolder + ".seed");
-			if (!File.Exists (cfgFile))
+			string cfgFile = Path.Combine (addonPath, saveFolder + ".seed");
+			try
 			{
-				File.Create (cfgFile);
+				File.WriteAllText (cfgFile, seed);
 			}
-			File.WriteAllText (cfgFile, seed);
+			catch (IOException e)
+			{
+				Debugger.LogException ("Could not write " + seed + " to config file!", e);
+			}
 		}
 
 		private static string GetSeedContents (string saveFolderName)
@@ -73,7 +77,12 @@ namespace RandomizedSystems.SaveGames
 			string[] files = Directory.GetFiles (addonPath);
 			foreach (string file in files)
 			{
-				if (Path.GetExtension (file) == "seed" && Path.GetFileNameWithoutExtension (file) == saveFolderName)
+				if (Path.GetExtension (file) != ".seed")
+				{
+					continue;
+				}
+				string fileName = Path.GetFileNameWithoutExtension (file);
+				if (fileName == saveFolderName)
 				{
 					return File.ReadAllText (file);
 				}

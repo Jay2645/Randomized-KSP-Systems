@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using RandomizedSystems.Systems;
 
 namespace RandomizedSystems.Randomizers
 {
@@ -91,7 +92,7 @@ namespace RandomizedSystems.Randomizers
 						if (planetTfm.name == planet.name)
 						{
 							//planetTfm.localScale = scale;
-							planetTfm.name = planetData.generalRandomizer.GetName (false);
+							planetTfm.name = planetData.name;
 							break;
 						}
 					}

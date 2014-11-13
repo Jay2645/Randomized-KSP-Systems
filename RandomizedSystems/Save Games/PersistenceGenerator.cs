@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using System;
 using RandomizedSystems.Vessels;
+using RandomizedSystems.Systems;
 using RandomizedSystems.WarpDrivers;
 
 namespace RandomizedSystems.SaveGames
@@ -13,7 +14,7 @@ namespace RandomizedSystems.SaveGames
 	public static class PersistenceGenerator
 	{
 		/// <summary>
-		/// Looks for a persistence file ("persistent.sfs") in the current save folder.
+		/// Looks for a persistence file (persistent.sfs) in the current save folder.
 		/// </summary>
 		/// <returns>A full path to the persistence file, or an empty string if it was not found.</returns>
 		public static string FindPersistenceFile ()
@@ -34,8 +35,8 @@ namespace RandomizedSystems.SaveGames
 				saveFolder = Path.Combine (saveFolder, HighLogic.SaveFolder);
 				if (Directory.Exists (saveFolder))
 				{
-					string persistence = Path.Combine (saveFolder, "persistent.sfs");
-					string backupFolder = Path.Combine (saveFolder, "Star Systems");
+					string persistence = Path.Combine (saveFolder, AstroUtils.DEFAULT_PERSISTENCE + AstroUtils.SFS);
+					string backupFolder = Path.Combine (saveFolder, AstroUtils.STAR_SYSTEM_FOLDER_NAME);
 					if (!Directory.Exists (backupFolder))
 					{
 						Directory.CreateDirectory (backupFolder);
@@ -56,7 +57,7 @@ namespace RandomizedSystems.SaveGames
 		public static bool SystemPersistenceExists (string persistence, string prefix)
 		{
 			string persistenceDirectory = Path.GetDirectoryName (persistence);
-			persistenceDirectory = Path.Combine (persistenceDirectory, "Star Systems");
+			persistenceDirectory = Path.Combine (persistenceDirectory, AstroUtils.STAR_SYSTEM_FOLDER_NAME);
 			if (Directory.Exists (persistenceDirectory))
 			{
 				string persistenceFilename = prefix + "_" + Path.GetFileName (persistence);
@@ -125,12 +126,12 @@ namespace RandomizedSystems.SaveGames
 		public static void SaveSnapshot (string seed)
 		{
 			Debugger.Log ("Saving snapshot: " + seed);
-			SaveGame (seed + "_persistent", "Star Systems");
+			SaveGame (seed + AstroUtils.SEED_PERSISTENCE, AstroUtils.STAR_SYSTEM_FOLDER_NAME);
 		}
 
 		public static void SavePersistence ()
 		{
-			SaveGame ("persistent");
+			SaveGame (AstroUtils.DEFAULT_PERSISTENCE);
 		}
 
 		private static void SaveGame (string filename, string subfolder = "")
@@ -200,8 +201,8 @@ namespace RandomizedSystems.SaveGames
 				// We don't actually have to load the WHOLE game, just the vessels
 				string path = Path.Combine (KSPUtil.ApplicationRootPath, "saves");
 				path = Path.Combine (path, HighLogic.SaveFolder);
-				path = Path.Combine (path, "Star Systems");
-				path = Path.Combine (path, newSeed + "_persistent.sfs");
+				path = Path.Combine (path, AstroUtils.STAR_SYSTEM_FOLDER_NAME);
+				path = Path.Combine (path, newSeed + AstroUtils.SEED_PERSISTENCE + AstroUtils.SFS);
 				// Generate root node from persistence file
 				ConfigNode root = ConfigNode.Load (path).GetNode ("GAME");
 				// Find FLIGHTSTATE node in the root node
