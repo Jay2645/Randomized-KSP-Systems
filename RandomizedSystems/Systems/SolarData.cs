@@ -22,7 +22,20 @@ namespace RandomizedSystems.Systems
 		/// The PlanetData corresponding with the sun.
 		/// </summary>
 		public PlanetData sunData = null;
-		public static SolarData currentSystem;
+
+		public static SolarData currentSystem
+		{
+			get
+			{
+				string seed = WarpDrivers.WarpDrive.seedString;
+				if (solarSystems.ContainsKey (seed))
+				{
+					return solarSystems [seed];
+				}
+				return null;
+			}
+		}
+
 		public bool debug = false;
 
 		public FlightState flightState
@@ -80,7 +93,10 @@ namespace RandomizedSystems.Systems
 			// Special case: Kerbin
 			this.seed = AstroUtils.KERBIN_SYSTEM_COORDS;
 			MakeNewSystem ();
-			solarSystems.Add (AstroUtils.KERBIN_SYSTEM_COORDS, this);
+			foreach (PlanetData planet in solarSystem)
+			{
+				planet.name = planet.planet.bodyName;
+			}
 		}
 
 		/// <summary>
@@ -94,8 +110,6 @@ namespace RandomizedSystems.Systems
 			this.debug = debug;
 			// Make the system
 			CreateSystem ();
-			// Add to lookup
-			solarSystems.Add (seed, this);
 		}
 
 		/// <summary>
@@ -115,7 +129,9 @@ namespace RandomizedSystems.Systems
 		{
 			solarSystem = new List<PlanetData> ();
 			sun = FindSun ();
-			sunData = new PlanetData (sun, this, solarSystem.Count);
+			// Add to lookup
+			solarSystems [seed] = this;
+			sunData = new PlanetData (sun, seed, solarSystem.Count);
 			solarSystem.Add (sunData);
 			CacheAllPlanets (sun, sunData.planetID);
 		}
@@ -127,7 +143,7 @@ namespace RandomizedSystems.Systems
 			{
 				count++;
 				int childID = solarSystem.Count;
-				PlanetData planet = new PlanetData (child, this, childID);
+				PlanetData planet = new PlanetData (child, seed, childID);
 				solarSystem.Add (planet);
 				solarSystem [parentID].childBodies.Add (child);
 				solarSystem [parentID].childDataIDs.Add (childID);
@@ -158,11 +174,11 @@ namespace RandomizedSystems.Systems
 			{
 				data.planet.orbitingBodies.Clear ();
 			}
+			SystemNamer.NamePlanets (this);
 			for (int i = 0; i < solarSystem.Count; i++)
 			{
 				solarSystem [i].ApplyChanges ();
 			}
-			currentSystem = this;
 		}
 
 		/// <summary>
@@ -208,6 +224,15 @@ namespace RandomizedSystems.Systems
 		{
 			if (planetID < solarSystem.Count)
 			{
+				for (int i = 0; i < solarSystem.Count; i++)
+				{
+					PlanetData planet = solarSystem [i];
+					if (planet.childBodies.Contains (child))
+					{
+						planet.childBodies.Remove (child);
+					}
+					solarSystem [i] = planet;
+				}
 				solarSystem [planetID].childBodies.Add (child);
 			}
 			else
@@ -248,6 +273,18 @@ namespace RandomizedSystems.Systems
 			if (planetID < solarSystem.Count)
 			{
 				solarSystem [planetID].gravity = newGravity;
+			}
+			else
+			{
+				Debugger.LogError (planetID + " does not match up with any planet!", "SolarData.AdjustPlanetGravity()");
+			}
+		}
+
+		public void NamePlanet (int planetID, string planetName)
+		{
+			if (planetID < solarSystem.Count)
+			{
+				solarSystem [planetID].name = name;
 			}
 			else
 			{

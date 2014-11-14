@@ -71,7 +71,7 @@ namespace RandomizedSystems.Randomizers
 				{
 					hasOxygen = true;
 				}
-				atmosphereHeight = WarpRNG.GenerateFloat (0.5f, 15.0f);
+				atmosphereHeight = WarpRNG.GenerateFloat (0.5f, 10.0f);
 				atmospherePressureMult = WarpRNG.GenerateFloat (0.1f, 15.0f);
 				ambientColor = new Color (WarpRNG.GetValue () * 0.25f, WarpRNG.GetValue () * 0.25f, WarpRNG.GetValue () * 0.25f);
 			}

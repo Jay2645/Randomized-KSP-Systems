@@ -131,7 +131,14 @@ namespace RandomizedSystems.SaveGames
 
 		public static void SavePersistence ()
 		{
-			SaveGame (WarpDrive.seedString, AstroUtils.DEFAULT_PERSISTENCE);
+			try
+			{
+				SaveGame (WarpDrive.seedString, AstroUtils.DEFAULT_PERSISTENCE);
+			}
+			catch (Exception e)
+			{
+				Debugger.LogException ("Attempted to save game but got exception.", e);
+			}
 		}
 
 		private static void SaveGame (string seed, string filename, string subfolder = "")
@@ -162,7 +169,6 @@ namespace RandomizedSystems.SaveGames
 			{
 				// Intentionally left blank
 			}
-			Debugger.LogWarning ("PersistenceGenerator has saved game as " + filename);
 		}
 
 		/// <summary>
@@ -199,22 +205,27 @@ namespace RandomizedSystems.SaveGames
 					currentVessel.Warp (newSeed);
 				}
 			}
+			Debugger.Log ("Vessels flushed!");
 			// Check to see if we already have a persistence file for this system
 			if (SystemPersistenceExists (persistence, newSeed))
 			{
 				// Load the game
 				// We don't actually have to load the WHOLE game, just the vessels
+				Debugger.Log ("Loading existing system at " + newSeed);
 				string path = Path.Combine (KSPUtil.ApplicationRootPath, "saves");
 				path = Path.Combine (path, HighLogic.SaveFolder);
 				path = Path.Combine (path, AstroUtils.STAR_SYSTEM_FOLDER_NAME);
 				path = Path.Combine (path, newSeed + AstroUtils.SEED_PERSISTENCE + AstroUtils.SFS);
 				// Generate root node from persistence file
 				ConfigNode root = ConfigNode.Load (path).GetNode ("GAME");
+				if (root == null)
+				{
+					throw new PlanetRandomizerException ("Could not load save file because the root node could not be found.");
+				}
 				// Find FLIGHTSTATE node in the root node
 				ConfigNode flightStateNode = root.GetNode ("FLIGHTSTATE");
 				// Generate new FlightState from the root
 				SolarData.currentSystem.flightState = new FlightState (flightStateNode, HighLogic.CurrentGame);
-				Debugger.LogWarning ("Loaded FlightState saved to " + newSeed + ". Node Count: " + flightStateNode.CountNodes);
 				foreach (ProtoVessel proto in SolarData.currentSystem.flightState.protoVessels)
 				{
 					VesselManager.LoadVessel (newSeed, proto);
@@ -224,11 +235,6 @@ namespace RandomizedSystems.SaveGames
 					// We've now purged the system of all the "old" data
 					WarpDrivers.WarpDrive.needsPurge = false;
 				}
-				Debugger.Log ("Vessels:");
-				foreach (Vessel v in FlightGlobals.Vessels)
-				{
-					Debugger.Log (v.vesselName);
-				}
 			}
 			else
 			{
@@ -236,6 +242,7 @@ namespace RandomizedSystems.SaveGames
 				HighLogic.CurrentGame.flightState = new FlightState ();
 				Debugger.LogWarning ("Created a blank star system for seed " + newSeed);
 			}
+			Debugger.Log ("All vessels have been merged successfully.");
 			SavePersistence ();
 		}
 	}

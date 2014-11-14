@@ -7,7 +7,23 @@ namespace RandomizedSystems.Systems
 {
 	public class PlanetData
 	{
-		public SolarData solarSystem;
+		public SolarData solarSystem
+		{
+			get
+			{
+				if (string.IsNullOrEmpty (seed))
+				{
+					return null;
+				}
+				if (SolarData.solarSystems.ContainsKey (seed))
+				{
+					return SolarData.solarSystems [seed];
+				}
+				return null;
+			}
+		}
+
+		public string seed = string.Empty;
 		public CelestialBody planet;
 		public int planetID = -1;
 		public int moonCount = 0;
@@ -183,7 +199,7 @@ namespace RandomizedSystems.Systems
 		{
 			get
 			{
-				if (generalRandomizer == null)
+				if (generalRandomizer == null || !string.IsNullOrEmpty (_name))
 				{
 					return _name;
 				}
@@ -199,7 +215,7 @@ namespace RandomizedSystems.Systems
 			}
 		}
 
-		private string _name;
+		private string _name = string.Empty;
 
 		public List<CelestialBody> childBodies
 		{
@@ -235,10 +251,10 @@ namespace RandomizedSystems.Systems
 			}
 		}
 		#endregion
-		public PlanetData (CelestialBody planet, SolarData system, int id)
+		public PlanetData (CelestialBody planet, string seed, int id)
 		{
 			this.planetID = id;
-			this.solarSystem = system;
+			this.seed = seed;
 			this.planet = planet;
 
 			// From here we add our randomizers
@@ -267,7 +283,14 @@ namespace RandomizedSystems.Systems
 
 		public void ApplyChanges ()
 		{
-			SystemNamer.NameBody (this);
+			if (solarSystem.seed != AstroUtils.KERBIN_SYSTEM_COORDS && string.IsNullOrEmpty (name))
+			{
+				SystemNamer.NameBody (this);
+			}
+			else if (solarSystem.IsKerbol ())
+			{
+				planet.bodyName = name;
+			}
 			if (solarSystem.debug)
 			{
 				string output = "Planet: " + name;

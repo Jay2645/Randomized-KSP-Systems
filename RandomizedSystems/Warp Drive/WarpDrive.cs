@@ -45,12 +45,12 @@ namespace RandomizedSystems.WarpDrivers
 		{
 			if (!hasInit)
 			{
-				hasInit = true;
 				// Please let us stay alive, Mr. Garbage Collector
 				DontDestroyOnLoad (this);
 				instance = this;
 				// Warp to Kerbin
-				Warp (false, AstroUtils.KERBIN_SYSTEM_COORDS);
+				Warp (false, AstroUtils.KERBIN_SYSTEM_COORDS, false);
+				hasInit = true;
 			}
 		}
 
@@ -157,7 +157,6 @@ namespace RandomizedSystems.WarpDrivers
 				// We've left Kerbol, so we need to purge the Kerbol vessels
 				needsPurge = true;
 			}
-			Debugger.LogWarning ("Created system " + currentSystem.name + " from string " + seedString + ".");
 			if (processActions)
 			{
 				// Call each post-warp action
@@ -172,13 +171,17 @@ namespace RandomizedSystems.WarpDrivers
 			{
 				PersistenceGenerator.SavePersistence ();
 			}
-			Debugger.Log ("All post-warp actions done.");
-			instance.Invoke ("PostWarp", Time.deltaTime);
+			if (hasInit)
+			{
+				instance.Invoke ("PostWarp", Time.deltaTime);
+			}
+			Debugger.LogWarning ("Created system " + currentSystem.name + " from string " + seedString + ".");
 		}
 
 		private void PostWarp ()
 		{
 			Vessels.VesselManager.ClearNonSystemVessels ();
+			Debugger.Log ("All post-warp actions done.");
 		}
 	}
 }

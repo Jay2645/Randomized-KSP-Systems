@@ -155,19 +155,17 @@ namespace RandomizedSystems.Systems
 		/// <param name="system">System.</param>
 		public static void NamePlanets (SolarData system)
 		{
+			if (!planetaryBodies.ContainsKey (system.sunData.planetID))
+			{
+				return;
+			}
 			SortPlanetsByDistance ();
-			if (planetaryBodies.ContainsKey (system.sunData.planetID))
+			PlanetData[] planets = planetaryBodies [system.sunData.planetID];
+			for (int i = 0; i < planets.Length; i++)
 			{
-				PlanetData[] planets = planetaryBodies [system.sunData.planetID];
-				foreach (PlanetData planet in planets)
-				{
-					NameBody (planet, true);
-				}
+				NameBody (planets [i], true);
 			}
-			else
-			{
-				Debugger.LogError ("Planetary system was never defined!");
-			}
+			planetaryBodies [system.sunData.planetID] = planets;
 		}
 
 		public static void NameBody (PlanetData planet, bool skipPlanetCheck = false)
@@ -186,9 +184,18 @@ namespace RandomizedSystems.Systems
 				// This would be removed if we are a planet which has already been named
 				return;
 			}
+			string referenceName = planet.referenceBodyData.name;
+			if (string.IsNullOrEmpty (referenceName))
+			{
+				Debugger.LogWarning ("Reference name is empty! " +
+					"Planet: " + planet.planetID + ", " +
+					"reference body: " + planet.referenceBodyData.name + ", " +
+					"ID " + planet.referenceBodyData.planetID);
+				PlanetData referenceBody = planet.solarSystem.GetPlanetByID (planet.referenceBodyData.planetID);
+				referenceName = referenceBody.planet.bodyName;
+			}
 			// Get list of all "sibling" bodies (bodies orbiting the same reference body)
 			PlanetData[] siblingBodies = planetaryBodies [planet.referenceBodyData.planetID];
-			string referenceName = planet.referenceBodyData.name;
 			int index = 0;
 			for (int i = 0; i < siblingBodies.Length; i++)
 			{
@@ -215,6 +222,7 @@ namespace RandomizedSystems.Systems
 				systemNameIndex += index;
 				name += ((char)systemNameIndex);
 			}
+			planet.solarSystem.NamePlanet (planet.planetID, name);
 			planet.name = name;
 			planet.planet.bodyName = name;
 		}

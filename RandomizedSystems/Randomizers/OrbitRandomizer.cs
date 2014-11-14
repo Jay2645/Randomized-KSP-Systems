@@ -100,15 +100,88 @@ namespace RandomizedSystems.Randomizers
 				orbitData.semiMajorAxis = 0;
 				return;
 			}
-			float value = WarpRNG.GetValue ();
 			#region Reference Body
+			CreateReferenceBody ();
+			#endregion
+			#region Gravity
+			CreateGravity ();
+			#endregion
+			#region Sphere of Influence
+			CreateSphereOfInfluence ();
+			#endregion
+			#region Semi-Major Axis
+			double semiMajorAxis = AstroUtils.MAX_SEMI_MAJOR_AXIS;
+			if (referenceBodyData.IsSun ())
+			{
+				semiMajorAxis = CreatePlanet ();
+			}
+			else
+			{
+				// Planet is moon
+				semiMajorAxis = CreateMoon ();
+			}
+			// Remove eccentricity from the semi-major axis
+			if (orbitData.eccentricity != 1.0f)
+			{
+				semiMajorAxis /= (1.0 - orbitData.eccentricity);
+			}
+			orbitData.semiMajorAxis = semiMajorAxis;
+			#endregion
+			#region Inclination
+			// New way uses normal distribution
+			double normalRNG = WarpRNG.GenerateNormalRandom ();
+			double normalInc = normalRNG * 5.0;
+			orbitData.inclination = normalInc;
+			#endregion
+			#region Eccentricity
+			// Eccentricity must be a value between 0 and 0.99
+			// We prefer low values
+			normalRNG = WarpRNG.GenerateNormalRandom ();
+			// We want to try to clamp the range somewhere between 0 and 0.1, since that produces results most similar to KSP
+			double eccentRNG = normalRNG * 0.01666667;
+			eccentRNG += 0.05;
+			if (eccentRNG < 0)
+			{
+				eccentRNG *= -1.0;
+			}
+			double eccentricity = eccentRNG;
+			orbitData.eccentricity = eccentricity;
+			#endregion
+			#region Longitude Ascending Node
+			int lan = WarpRNG.GenerateInt (0, 360);
+			orbitData.longitudeAscendingNode = lan;
+			#endregion
+			#region Argument Of Periapsis
+			int argumentOfPeriapsis = WarpRNG.GenerateInt (0, 360);
+			orbitData.argumentOfPeriapsis = argumentOfPeriapsis;
+			#endregion
+			#region Mean Anomaly at Epoch
+			float meanAnomalyAtEpoch = WarpRNG.GenerateFloat (0.0f, Mathf.PI * 2.0f);
+			if (orbitData.semiMajorAxis < 0)
+			{
+				meanAnomalyAtEpoch /= Mathf.PI;
+				meanAnomalyAtEpoch -= 1.0f;
+				meanAnomalyAtEpoch *= 5.0f;
+			}
+			orbitData.meanAnomalyAtEpoch = meanAnomalyAtEpoch;
+			#endregion
+			#region Period
+			double referenceMass = AstroUtils.MassInSolarMasses (referenceBody.Mass);
+			double usMass = AstroUtils.MassInSolarMasses (planet.Mass);
+			orbitData.period = AstroUtils.CalculatePeriodFromSemiMajorAxis (semiMajorAxis, referenceMass, usMass);
+			#endregion
+		}
+
+		private void CreateReferenceBody (bool forcePlanet = false)
+		{
 			referenceBodyData = null;
 			referenceBody = null;
+			float value = WarpRNG.GetValue ();
 			// Planet is in a solar orbit if any of these are true:
 			// 1. RNG rolls a value above at or below 0.25 (25% chance)
 			// 2. There is only one planet in the solar system (should never happen).
 			// 3. We already have a moon orbiting us (no moons orbiting other moons)
-			if (value <= 0.25f || solarSystem.planetCount <= 1 || childBodies.Count > 0)
+			if (forcePlanet || value <= 0.25f || solarSystem.planetCount <= 1 || childBodies.Count > 0)
 			{
 				referenceBody = solarSystem.sun;
 				referenceBodyData = solarSystem.sunData;
@@ -151,8 +224,11 @@ namespace RandomizedSystems.Randomizers
 			solarSystem.AddChildToPlanet (referenceBodyData, planet);
 			// Update orbital data
 			orbitData.referenceBody = referenceBody;
-			#endregion
-			#region Gravity
+		}
+
+		private void CreateGravity ()
+		{
+			float value = WarpRNG.GetValue ();
 			float gravityMult = 0.0f;
 			if (IsMoon ())
 			{
@@ -166,7 +242,6 @@ namespace RandomizedSystems.Randomizers
 			else
 			{
 				gravityMult = WarpRNG.GenerateFloat (0.15f, 2.0f);
-				value = WarpRNG.GetValue ();
 				// There is a chance that a planet is a gas giant like Jool
 				if (value <= 0.05f)
 				{
@@ -175,161 +250,87 @@ namespace RandomizedSystems.Randomizers
 			}
 			// All gravity values are relative to Kerbin
 			gravity = gravityMult * AstroUtils.KERBIN_GRAVITY;
-			#endregion
-			#region Inclination
-			// New way uses normal distribution
-			double normalRNG = WarpRNG.GenerateNormalRandom ();
-			double normalInc = normalRNG * 5.0;
-			orbitData.inclination = normalInc;
-			#endregion
-			#region Eccentricity
-			// Eccentricity must be a value between 0 and 0.99
-			// We prefer low values
-			normalRNG = WarpRNG.GenerateNormalRandom ();
-			// We want to try to clamp the range somewhere between 0 and 0.1, since that produces results most similar to KSP
-			double eccentRNG = normalRNG * 0.01666667;
-			eccentRNG += 0.05;
-			if (eccentRNG < 0)
-			{
-				eccentRNG *= -1.0;
-			}
-			double eccentricity = eccentRNG;
-			/*if (eccentricity == 1)
-			{
-				eccentricity = 0.99;
-			}
-			// For extreme values of eccentricity, tone it down a bit so planets don't buzz the sun so much
-			if (eccentricity > 0.95)
-			{
-				eccentricity *= 0.5f;
-			}
-			else
-			{
-				// Below 0.25 eccentricity is ignored
-				if (eccentricity <= 0.25)
-				{
-					// Values above 0.25 are toned down by 10% to keep orbits circlular
-					eccentricity -= (eccentricity * 0.1f);
-				}
-				if (eccentricity <= 0.5)
-				{
-					// Values above 0.8 after being toned down are toned down by 25%
-					eccentricity -= (eccentricity * 0.25f);
-				}
-				if (eccentricity <= 0.8)
-				{
-					// If values are *still* above 0.8, cut in half
-					eccentricity *= 0.5f;
-				}
-				else
-				{
-					// Square resulting eccentricity to make orbits slightly more circular
-					eccentricity *= eccentricity;
-				}
-				if (eccentricity < 0)
-				{
-					// Should never happen
-					eccentricity = 0;
-				}
-			}*/
-			orbitData.eccentricity = eccentricity;
-			#endregion
-			#region Sphere of Influence
+		}
+
+		private void CreateSphereOfInfluence ()
+		{
 			sphereOfInfluence = AstroUtils.CalculateSOIFromMass (planetData);
 			if (sphereOfInfluence > AstroUtils.KERBIN_SOI * 30)
 			{
 				// This is where Jool's SOI caps out -- we don't want to go any larger
 				sphereOfInfluence = AstroUtils.KERBIN_SOI * 30;
 			}
-			#endregion
-			#region Semi-Major Axis
-			double semiMajorAxis = AstroUtils.MAX_SEMI_MAJOR_AXIS;
-			if (referenceBodyData.IsSun ())
+		}
+
+		private double CreatePlanet ()
+		{
+			// Find Semi-Major Axis in KAU (Kerbin Astronomical Units)
+			double kerbinSemiMajorAxisMultiplier = WarpRNG.GenerateNormalRandom ();
+			// Standard deviation of 2
+			kerbinSemiMajorAxisMultiplier *= 2.0;
+			// Center it so it's roughly between 0.2 and 4 times Kerbin's orbit
+			kerbinSemiMajorAxisMultiplier += 3.2;
+			// Now we bias it a little bit (making it technically not a "true" normal distribution, but alas)
+			// Really should use Math.Abs
+			if (kerbinSemiMajorAxisMultiplier < 0)
 			{
-				// Special case: parent is sun
-				// Find Semi-Major Axis in KAU (Kerbin Astronomical Units)
-				double kerbinSemiMajorAxisMultiplier = WarpRNG.GenerateNormalRandom ();
-				// Standard deviation of 2
-				kerbinSemiMajorAxisMultiplier *= 2.0;
-				// Center it so it's roughly between 0.2 and 4 times Kerbin's orbit
-				kerbinSemiMajorAxisMultiplier += 3.2;
-				// Now we bias it a little bit (making it technically not a "true" normal distribution, but alas)
-				// Really should use Math.Abs
-				if (kerbinSemiMajorAxisMultiplier < 0)
-				{
-					kerbinSemiMajorAxisMultiplier *= -1.0;
-				}
-				if (kerbinSemiMajorAxisMultiplier < 0.05)
-				{
-					// Don't want to be too close to the sun
-					kerbinSemiMajorAxisMultiplier += 0.05;
-				}
-				semiMajorAxis = kerbinSemiMajorAxisMultiplier * AstroUtils.KERBAL_ASTRONOMICAL_UNIT;
+				kerbinSemiMajorAxisMultiplier *= -1.0;
 			}
-			else
+			if (kerbinSemiMajorAxisMultiplier < 0.05)
 			{
-				// Planet is moon
-				value = WarpRNG.GetValue ();
-				// Floor resulting value at 1%, to be used later
-				if (value < 0.0001f)
+				// Don't want to be too close to the sun
+				kerbinSemiMajorAxisMultiplier += 0.05;
+			}
+			return kerbinSemiMajorAxisMultiplier * AstroUtils.KERBAL_ASTRONOMICAL_UNIT;
+		}
+
+		private double CreateMoon ()
+		{
+			float value = WarpRNG.GetValue ();
+			// Floor resulting value at 1%, to be used later
+			if (value < 0.0001f)
+			{
+				value = 0.0001f;
+			}
+			// Semi-Major Axis can be anywhere within the hill sphere of parent body
+			double hillSphere = AstroUtils.CalculateHillSphere (referenceBodyData);
+			double tempMajorAxis = hillSphere * value * 0.5;
+			double parentAtmosphereHeight = planet.Radius + (sphereOfInfluence * 0.5) + referenceBody.Radius + (referenceBody.atmosphereScaleHeight * 1000.0 * Mathf.Log (1000000.0f));
+			while (tempMajorAxis < parentAtmosphereHeight)
+			{
+				// Inside planet's atmosphere
+				value += WarpRNG.GenerateFloat (0.001f, 0.1f);
+				tempMajorAxis = hillSphere * value;
+			}
+			foreach (int id in referenceBodyData.childDataIDs)
+			{
+				// This ensures we do not crash into other planets
+				PlanetData childData = solarSystem.GetPlanetByID (id);
+				double moonAxis = childData.semiMajorAxis;
+				double moonMin = moonAxis - childData.planet.Radius - (childData.sphereOfInfluence * 0.5);
+				double moonMax = moonAxis + childData.planet.Radius + (childData.sphereOfInfluence * 0.5);
+				while (tempMajorAxis + planet.Radius >= moonMin && tempMajorAxis <= moonMax)
 				{
-					value = 0.0001f;
-				}
-				// Semi-Major Axis can be anywhere within the hill sphere of parent body
-				double hillSphere = AstroUtils.CalculateHillSphere (referenceBodyData);
-				double tempMajorAxis = hillSphere * value * 0.5;
-				double parentAtmosphereHeight = planet.Radius + referenceBody.Radius + (referenceBody.atmosphereScaleHeight * 1000.0 * Mathf.Log (1000000.0f));
-				while (tempMajorAxis + (0.5 * sphereOfInfluence) < parentAtmosphereHeight)
-				{
-					// Inside planet's atmosphere
 					value += WarpRNG.GenerateFloat (0.001f, 0.1f);
-					tempMajorAxis = semiMajorAxis * value;
-					foreach (int id in referenceBodyData.childDataIDs)
-					{
-						// This ensures we do not crash into other planets
-						PlanetData childData = solarSystem.GetPlanetByID (id);
-						double moonAxis = childData.semiMajorAxis;
-						double moonMin = moonAxis - childData.planet.Radius;
-						double moonMax = moonAxis + childData.planet.Radius;
-						while (tempMajorAxis + planet.Radius >= moonMin && tempMajorAxis <= moonMax)
-						{
-							value += WarpRNG.GenerateFloat (0.001f, 0.1f);
-							tempMajorAxis = semiMajorAxis * value;
-						}
-					}
+					tempMajorAxis = hillSphere * value;
 				}
-				semiMajorAxis = tempMajorAxis;
 			}
-			// Remove eccentricity from the semi-major axis
-			if (orbitData.eccentricity != 1.0f)
+			if (tempMajorAxis > referenceBodyData.sphereOfInfluence)
 			{
-				semiMajorAxis /= (1.0 - orbitData.eccentricity);
+				Debugger.LogWarning ("Rejecting " + planetData.planetID + " as a candidate due to bad SOI matchup. " +
+					"Previous body: " + referenceBodyData.planetID);
+				orbitData = new OrbitData ();
+				orbitData.randomized = true;
+				referenceBodyData = null;
+				referenceBody = null;
+				// Make us a planet instead
+				CreateReferenceBody (true);
+				CreateGravity ();
+				CreateSphereOfInfluence ();
+				Debugger.LogWarning ("New body: " + referenceBodyData.planetID);
+				return CreatePlanet ();
 			}
-			orbitData.semiMajorAxis = semiMajorAxis;
-			#endregion
-			#region Longitude Ascending Node
-			int lan = WarpRNG.GenerateInt (0, 360);
-			orbitData.longitudeAscendingNode = lan;
-			#endregion
-			#region Argument Of Periapsis
-			int argumentOfPeriapsis = WarpRNG.GenerateInt (0, 360);
-			orbitData.argumentOfPeriapsis = argumentOfPeriapsis;
-			#endregion
-			#region Mean Anomaly at Epoch
-			float meanAnomalyAtEpoch = WarpRNG.GenerateFloat (0.0f, Mathf.PI * 2.0f);
-			if (orbitData.semiMajorAxis < 0)
-			{
-				meanAnomalyAtEpoch /= Mathf.PI;
-				meanAnomalyAtEpoch -= 1.0f;
-				meanAnomalyAtEpoch *= 5.0f;
-			}
-			orbitData.meanAnomalyAtEpoch = meanAnomalyAtEpoch;
-			#endregion
-			#region Period
-			double referenceMass = AstroUtils.MassInSolarMasses (referenceBody.Mass);
-			double usMass = AstroUtils.MassInSolarMasses (planet.Mass);
-			orbitData.period = AstroUtils.CalculatePeriodFromSemiMajorAxis (semiMajorAxis, referenceMass, usMass);
-			#endregion
+			return tempMajorAxis;
 		}
 
 		public override void Apply ()

@@ -59,6 +59,7 @@
     <Compile Include="Systems\PlanetData.cs" />
     <Compile Include="Systems\SolarData.cs" />
     <Compile Include="Systems\SystemNamer.cs" />
+    <Compile Include="Randomizers\PlanetRandomizerException.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
