@@ -172,7 +172,7 @@ namespace RandomizedSystems.Systems
 
 		public static void NameBody (PlanetData planet, bool skipPlanetCheck = false)
 		{
-			if (planet.IsSun ())
+			if (planet.IsSun () || planet.solarSystem.IsKerbol ())
 			{
 				return;
 			}
@@ -194,7 +194,6 @@ namespace RandomizedSystems.Systems
 			{
 				if (siblingBodies [i].planetID == planet.planetID)
 				{
-					Debugger.LogError ("Planet ID of " + siblingBodies [i].planetID + " matches " + planet.planetID + ". Index is " + i);
 					index = i;
 					break;
 				}

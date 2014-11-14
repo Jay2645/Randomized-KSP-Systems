@@ -279,7 +279,7 @@ namespace RandomizedSystems.Randomizers
 				double hillSphere = AstroUtils.CalculateHillSphere (referenceBodyData);
 				double tempMajorAxis = hillSphere * value * 0.5;
 				double parentAtmosphereHeight = planet.Radius + referenceBody.Radius + (referenceBody.atmosphereScaleHeight * 1000.0 * Mathf.Log (1000000.0f));
-				while (tempMajorAxis < parentAtmosphereHeight)
+				while (tempMajorAxis + (0.5 * sphereOfInfluence) < parentAtmosphereHeight)
 				{
 					// Inside planet's atmosphere
 					value += WarpRNG.GenerateFloat (0.001f, 0.1f);
@@ -340,6 +340,7 @@ namespace RandomizedSystems.Randomizers
 				{
 					Debugger.Log ("Sphere of influence: " + sphereOfInfluence + " meters (" + (sphereOfInfluence / AstroUtils.KERBIN_SOI) + " times Kerbin SOI)");
 				}
+				referenceBody.orbitingBodies.Add (planet);
 				planet.sphereOfInfluence = sphereOfInfluence;
 			}
 			if (solarSystem.debug)
@@ -379,7 +380,6 @@ namespace RandomizedSystems.Randomizers
 			                    data.argumentOfPeriapsis, 
 			                    data.meanAnomalyAtEpoch, 
 			                    data.epoch,
-			                    data.period,
 			                    orbit,
 			                    data.referenceBody);
 		}
@@ -391,7 +391,6 @@ namespace RandomizedSystems.Randomizers
 		                           double argumentOfPeriapsis, 
 		                           double meanAnomalyAtEpoch, 
 		                           double epoch, 
-		                           double period,
 		                           Orbit orbit,
 		                           CelestialBody referenceBody)
 		{
@@ -461,18 +460,9 @@ namespace RandomizedSystems.Randomizers
 				Debugger.Log ("Argument of Periapsis: " + argumentOfPeriapsis);
 				Debugger.Log ("Mean Anomaly at Epoch: " + meanAnomalyAtEpoch);
 				Debugger.Log ("Epoch: " + epoch);
-				Debugger.Log ("Period: " + period + "(" + (period / AstroUtils.EARTH_YEAR_IN_SECONDS) + " Earth years)");
 			}
-			orbit.referenceBody = referenceBody;
-			orbit.inclination = inclination;
-			orbit.eccentricity = eccentricity;
-			orbit.semiMajorAxis = semiMajorAxis;
-			orbit.LAN = longitudeAscendingNode;
-			orbit.argumentOfPeriapsis = argumentOfPeriapsis;
-			orbit.meanAnomalyAtEpoch = meanAnomalyAtEpoch;
-			orbit.epoch = epoch;
-			orbit.period = period;
-			return orbit;
+			Orbit newOrbit = new Orbit (inclination, eccentricity, semiMajorAxis, longitudeAscendingNode, argumentOfPeriapsis, meanAnomalyAtEpoch, epoch, referenceBody);
+			return newOrbit;
 		}
 	}
 }

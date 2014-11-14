@@ -67,14 +67,7 @@ namespace RandomizedSystems.Vessels
 				if (vessel.id != unloadIgnoreID || unloadIgnoreID == Guid.Empty)
 				{
 					vesselSeeds [vessel.id] = warpSeed;
-					if (RemoveVesselFromSystem (vessel))
-					{
-						if (persistentVessels.ContainsKey (vessel.id))
-						{
-							persistentVessels [vessel.id].loaded = false;
-						}
-					}
-					else
+					if (!RemoveVesselFromSystem (vessel))
 					{
 						Debugger.LogWarning ("Could not unload " + vessel.name);
 						unclearableVessels.Add (vessel);
@@ -98,14 +91,21 @@ namespace RandomizedSystems.Vessels
 			if (toRemove.loaded)
 			{
 				Debugger.LogError (toRemove.vesselName + " is loaded!");
-				return false;
 			}
 			else
 			{
-				HighLogic.CurrentGame.DestroyVessel (toRemove);
-				toRemove.DestroyVesselComponents ();
-				return true;
+				Guid id = toRemove.id;
+				if (persistentVessels.ContainsKey (id))
+				{
+					PersistentVessel vessel = persistentVessels [id];
+					return vessel.Despawn ();
+				}
+				else
+				{
+					Debugger.LogError (toRemove.vesselName + " was never cached as a PersistentVessel!");
+				}
 			}
+			return false;
 		}
 
 		public static PersistentVessel GetPersistentVessel (Guid vesselID)
@@ -119,150 +119,51 @@ namespace RandomizedSystems.Vessels
 
 		public static Vessel LoadVessel (string seed, ProtoVessel proto)
 		{
-			PersistentVessel persistentVessel = new PersistentVessel (seed, proto);
+			PersistentVessel persistentVessel = LoadPersistentVessel (seed, proto);
 			Vessel vessel = persistentVessel.Spawn ();
-			persistentVessels [vessel.id] = persistentVessel;
-			return vessel;
-		}
-	}
-	/*public class VesselManager
-	{
-		public VesselManager (FlightState flightState)
-		{
-			this.flightState = flightState;
-			foreach (Vessel v in FlightGlobals.Vessels)
-			{
-				loadedVesselIDs.Add (v.id, v);
-			}
-		}
-
-		private Dictionary<Guid,Vessel> loadedVesselIDs = new Dictionary<Guid, Vessel> ();
-		private FlightState flightState;
-
-		public Vessel LoadVessel (ProtoVessel proto)
-		{
-			Guid protoID = proto.vesselID;
-			if (protoID != Guid.Empty && loadedVesselIDs.ContainsKey (protoID))
-			{
-				// Already have a vessel with this ID
-				return loadedVesselIDs [protoID];
-			}
-			// Loads the vessel itself and assigns it to vesselRef
-			proto.Load (flightState);
-			Vessel vessel = proto.vesselRef;
-			// Update the Guid with the "actual" Guid
-			protoID = vessel.id;
-			// We haven't added ourselves to the Guid list yet, so we need to double-check to make sure we're still okay
-			if (loadedVesselIDs.ContainsKey (protoID))
-			{
-				// Looks like we did already exist after all
-				RemoveVesselFromSystem (proto.vesselRef);
-				return loadedVesselIDs [protoID];
-			}
-			Debugger.LogWarning ("Loaded vessel " + proto.vesselRef.vesselName + ", ID: " + protoID.ToString ());
-			// Add the current ID to the Guid list
-			loadedVesselIDs.Add (protoID, vessel);
 			return vessel;
 		}
 
-		private void ValidateVessels ()
+		public static PersistentVessel LoadPersistentVessel (string seed, ProtoVessel proto)
 		{
-			Debugger.LogWarning ("Validating vessels.");
-			// Get all vessels loaded and all vessels we know about
-			List<Vessel> loadedVessels = new List<Vessel> (FlightGlobals.Vessels);
-			Dictionary<Guid,Vessel> vesselIDs = new Dictionary<Guid, Vessel> (loadedVesselIDs);
-			foreach (Vessel v in FlightGlobals.Vessels.ToArray())
+			PersistentVessel persistentVessel = new PersistentVessel (seed, proto);
+			Guid id = proto.vesselID;
+			if (id == Guid.Empty)
 			{
-				Debugger.LogWarning (v.vesselName);
-				Guid vesselID = v.id;
-				// If we know about this vessel, remove it from the list
-				if (vesselIDs.ContainsKey (vesselID))
-				{
-					vesselIDs.Remove (vesselID);
-					loadedVessels.Remove (v);
-				}
-			}
-			// List now contains only vessels we don't know about or are duplicates
-			Vessel[] badVessels = loadedVessels.ToArray ();
-			foreach (Vessel v in badVessels)
-			{
-				RemoveVesselFromSystem (v);
-			}
-		}
-
-		public void LoadAllProtoVessels ()
-		{
-			foreach (ProtoVessel vessel in flightState.protoVessels)
-			{
-				LoadVessel (vessel);
-			}
-			ValidateVessels ();
-		}
-
-public static bool RemoveVesselFromSystem (Vessel toRemove)
-		{
-			Debugger.LogWarning ("Clearing " + toRemove.vesselName);
-			if (toRemove.loaded)
-			{
-				Debugger.LogError (toRemove.vesselName + " is loaded!");
-				return false;
+				Debugger.LogWarning ("Vessel " + proto.vesselName + " not cached because GUID was empty!");
 			}
 			else
 			{
-				HighLogic.CurrentGame.DestroyVessel (toRemove);
-				toRemove.DestroyVesselComponents ();
-				return true;
+				vesselSeeds [id] = seed;
+				persistentVessels [id] = persistentVessel;
 			}
+			return persistentVessel;
 		}
 
-		public static void EnsureInLoadedVessels (Vessel toAdd)
+		public static void ClearNonSystemVessels ()
 		{
-			foreach (Vessel vessel in FlightGlobals.Vessels)
+			foreach (Vessel v in GameObject.FindObjectsOfType<Vessel>())
 			{
-				if (vessel.id == toAdd.id)
+				Guid id = v.id;
+				if (vesselSeeds.ContainsKey (id))
 				{
-					return;
-				}
-			}
-			// Not in vessel list
-			FlightGlobals.Vessels.Add (toAdd);
-		}
-
-		public static void EnsureUniqueVessels ()
-		{
-			Dictionary<Guid,Vessel> vesselLookup = new Dictionary<Guid, Vessel> ();
-			Vessel[] allVessels = FlightGlobals.Vessels.ToArray ();
-			for (int i = 0; i < allVessels.Length; i++)
-			{
-				Vessel vessel = allVessels [i];
-				Debugger.Log ("Vessel: " + vessel.vesselName);
-				if (vesselLookup.ContainsKey (vessel.id))
-				{
-					Debugger.LogError (vessel.vesselName + " is not unique!");
-					if (!VesselManager.RemoveVesselFromSystem (vessel))
+					string seed = vesselSeeds [id];
+					PersistentVessel persistentVessel = persistentVessels [id];
+					if (persistentVessel.loaded)
 					{
-						// Unable to remove ourselves from the system for whatever reason
-						// Try to remove the other copy
-						Vessel oldVessel = vesselLookup [vessel.id];
-						if (VesselManager.RemoveVesselFromSystem (oldVessel))
+						Debugger.Log ("Vessel: " + v.vesselName + ", seed " + seed + ", ID: " + id.ToString ());
+						if (seed != WarpDrive.seedString)
 						{
-							vesselLookup [vessel.id] = vessel;
-						}
-						else
-						{
-							Debugger.LogError ("Unable to ensure " + vessel.vesselName + " is unique!");
+							Debugger.LogWarning ("Vessel is in the wrong seed!");
 						}
 					}
-					continue;
 				}
-				vesselLookup.Add (vessel.id, vessel);
-			}
-			FlightGlobals.Vessels.Clear ();
-			foreach (KeyValuePair<Guid,Vessel> kvp in vesselLookup)
-			{
-				FlightGlobals.Vessels.Add (kvp.Value);
+				else
+				{
+					Debugger.LogError ("Vessel loaded but not cached: " + v.vesselName + ", ID: " + id.ToString ());
+				}
 			}
 		}
-	}*/
+	}
 }
 

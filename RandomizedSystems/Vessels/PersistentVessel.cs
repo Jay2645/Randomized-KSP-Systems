@@ -28,7 +28,7 @@ namespace RandomizedSystems.Vessels
 			{
 				return _loaded;
 			}
-			set
+			private set
 			{
 				_loaded = value;
 				if (value)
@@ -97,6 +97,19 @@ namespace RandomizedSystems.Vessels
 			return protoVessel.vesselRef;
 		}
 
+		public bool Despawn ()
+		{
+			if (protoVessel.vesselRef == null)
+			{
+				Debugger.LogError ("Cannot despawn persistent vessel " + protoVessel.vesselName + " because vessel reference was null!");
+				return false;
+			}
+			HighLogic.CurrentGame.DestroyVessel (protoVessel.vesselRef);
+			protoVessel.vesselRef.DestroyVesselComponents ();
+			loaded = false;
+			return true;
+		}
+
 		public void Warp (string newSeed)
 		{
 			Dictionary<Guid,Vessel> vesselLookup = null;
@@ -120,9 +133,5 @@ namespace RandomizedSystems.Vessels
 			vesselLookup.Add (id, protoVessel.vesselRef);
 			seedGUIDLookup [seed] = vesselLookup;
 		}
-		/*public static PersistentVessel CreateVessel (string seed)
-		{
-
-		}*/
 	}
 }

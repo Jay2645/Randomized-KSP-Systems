@@ -154,6 +154,10 @@ namespace RandomizedSystems.Systems
 
 		private void ApplySystem ()
 		{
+			foreach (PlanetData data in solarSystem)
+			{
+				data.planet.orbitingBodies.Clear ();
+			}
 			for (int i = 0; i < solarSystem.Count; i++)
 			{
 				solarSystem [i].ApplyChanges ();
@@ -285,6 +289,11 @@ namespace RandomizedSystems.Systems
 				currentBody = currentBody.referenceBody;
 			}
 			return currentBody;
+		}
+
+		public bool IsKerbol ()
+		{
+			return seed == AstroUtils.KERBIN_SYSTEM_COORDS;
 		}
 	}
 }

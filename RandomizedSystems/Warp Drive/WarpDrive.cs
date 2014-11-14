@@ -21,6 +21,7 @@ namespace RandomizedSystems.WarpDrivers
 		private static string lastSeed = string.Empty;
 		private static bool hasInit = false;
 		private static Rect windowPosition;
+		private static WarpDrive instance;
 		private static List<OnWarpDelegate> nextWarpActions = new List<OnWarpDelegate> ();
 
 		public static SolarData currentSystem
@@ -47,6 +48,7 @@ namespace RandomizedSystems.WarpDrivers
 				hasInit = true;
 				// Please let us stay alive, Mr. Garbage Collector
 				DontDestroyOnLoad (this);
+				instance = this;
 				// Warp to Kerbin
 				Warp (false, AstroUtils.KERBIN_SYSTEM_COORDS);
 			}
@@ -139,7 +141,7 @@ namespace RandomizedSystems.WarpDrivers
 				// Create the RNG
 				Randomizers.WarpRNG.ReSeed (seedString);
 				// Create and randomize the system
-				SolarData.CreateSystem (seedString, true);
+				SolarData.CreateSystem (seedString);
 				// Write the current seed to file
 				SeedTracker.Jump ();
 			}
@@ -171,6 +173,12 @@ namespace RandomizedSystems.WarpDrivers
 				PersistenceGenerator.SavePersistence ();
 			}
 			Debugger.Log ("All post-warp actions done.");
+			instance.Invoke ("PostWarp", Time.deltaTime);
+		}
+
+		private void PostWarp ()
+		{
+			Vessels.VesselManager.ClearNonSystemVessels ();
 		}
 	}
 }

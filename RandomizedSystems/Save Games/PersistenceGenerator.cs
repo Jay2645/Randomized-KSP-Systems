@@ -126,15 +126,15 @@ namespace RandomizedSystems.SaveGames
 		public static void SaveSnapshot (string seed)
 		{
 			Debugger.Log ("Saving snapshot: " + seed);
-			SaveGame (seed + AstroUtils.SEED_PERSISTENCE, AstroUtils.STAR_SYSTEM_FOLDER_NAME);
+			SaveGame (seed, seed + AstroUtils.SEED_PERSISTENCE, AstroUtils.STAR_SYSTEM_FOLDER_NAME);
 		}
 
 		public static void SavePersistence ()
 		{
-			SaveGame (AstroUtils.DEFAULT_PERSISTENCE);
+			SaveGame (WarpDrive.seedString, AstroUtils.DEFAULT_PERSISTENCE);
 		}
 
-		private static void SaveGame (string filename, string subfolder = "")
+		private static void SaveGame (string seed, string filename, string subfolder = "")
 		{
 			// Expand subfolder
 			if (subfolder == "")
@@ -148,6 +148,11 @@ namespace RandomizedSystems.SaveGames
 			// Make sure everyone is on the same page
 			Game savedGame = HighLogic.CurrentGame.Updated ();
 			GamePersistence.SaveGame (savedGame, filename, subfolder, SaveMode.OVERWRITE);
+			// Log all vessels in the current seed
+			foreach (Vessel v in UnityEngine.GameObject.FindObjectsOfType<Vessel>())
+			{
+				VesselManager.LoadPersistentVessel (seed, v.BackupVessel ());
+			}
 			// This is a hacky way to force the tracking station to update
 			try
 			{
