@@ -23,6 +23,7 @@ namespace RandomizedSystems.WarpDrivers
 		private static Rect windowPosition;
 		private static WarpDrive instance;
 		private static List<OnWarpDelegate> nextWarpActions = new List<OnWarpDelegate> ();
+		private const string CONTROL_LOCK_ID = "Warp Window Lock";
 
 		public static SolarData currentSystem
 		{
@@ -61,17 +62,18 @@ namespace RandomizedSystems.WarpDrivers
 		public static void OpenWindow ()
 		{
 			windowPosition = new Rect ((Screen.width / 2) - windowWidth, (Screen.height / 2) - windowHeight, 0, 0);
+			InputLockManager.SetControlLock (ControlTypes.All, CONTROL_LOCK_ID);
 			RenderingManager.AddToPostDrawQueue (0, OnDraw);
 		}
 
 		/// <summary>
 		/// Automatically jumps to kerbol.
 		/// </summary>
-		public static void JumpToKerbol (bool processActions, bool removeVesselFromSystem = true)
+		public static void JumpToKerbol (bool processActions, Vessel warpVessel)
 		{
 			currentSeed = AstroUtils.KERBIN_SYSTEM_COORDS;
 			Warp (processActions, currentSeed, false);
-			PersistenceGenerator.LoadSnapshotVessels (lastSeed, seedString, removeVesselFromSystem);
+			PersistenceGenerator.WarpSingleVessel (lastSeed, seedString, warpVessel);
 		}
 
 		private static void OnDraw ()
@@ -101,8 +103,9 @@ namespace RandomizedSystems.WarpDrivers
 			{
 				// User has hit the button or pressed enter
 				Warp (true, currentSeed, false);
-				PersistenceGenerator.LoadSnapshotVessels (lastSeed, seedString, true);
+				PersistenceGenerator.WarpSingleVessel (lastSeed, seedString, FlightGlobals.ActiveVessel);
 				RenderingManager.RemoveFromPostDrawQueue (0, OnDraw);
+				InputLockManager.RemoveControlLock (CONTROL_LOCK_ID);
 			}
 			GUILayout.EndVertical ();
 			// Allow the window to be draggable

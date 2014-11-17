@@ -34,12 +34,11 @@ namespace RandomizedSystems.Vessels
 
 		private static void OnEnteredSpaceCenter ()
 		{
-			Debugger.Log ("Entered space center!");
 			string warpSeed = WarpDrive.seedString;
 			if (warpSeed != AstroUtils.KERBIN_SYSTEM_COORDS)
 			{
 				// Load the Kerbin snapshot
-				PersistenceGenerator.LoadSnapshot (AstroUtils.KERBIN_SYSTEM_COORDS);
+				PersistenceGenerator.LoadSnapshot (warpSeed, AstroUtils.KERBIN_SYSTEM_COORDS);
 			}
 		}
 
@@ -53,20 +52,26 @@ namespace RandomizedSystems.Vessels
 			FlushVesselCache (warpSeed, Guid.Empty);
 		}
 
-		public static void FlushVesselCache (string warpSeed, Guid unloadIgnoreID)
+		public static void FlushVesselCache (string unloadedSeed, Guid unloadIgnoreID)
 		{
 			// Save a snapshot
-			PersistenceGenerator.SaveSnapshot (warpSeed);
+			PersistenceGenerator.SaveSnapshot (unloadedSeed);
 			// Cache the current system
 			Vessel[] allVessels = GameObject.FindObjectsOfType<Vessel> ();
 			List<Vessel> unclearableVessels = new List<Vessel> ();
+			// Despawn all vessels
+			Debugger.Log (allVessels.Length + " vessels need to be despawed.");
+			if (unloadIgnoreID != Guid.Empty)
+			{
+				Debugger.Log ("Vessel with ID " + unloadIgnoreID.ToString () + " will be ignored.");
+			}
 			for (int i = 0; i < allVessels.Length; i++)
 			{
 				Vessel vessel = allVessels [i];
 				// Clear the vessel unless we are asked to ignore it
 				if (vessel.id != unloadIgnoreID || unloadIgnoreID == Guid.Empty)
 				{
-					vesselSeeds [vessel.id] = warpSeed;
+					vesselSeeds [vessel.id] = unloadedSeed;
 					if (!RemoveVesselFromSystem (vessel))
 					{
 						Debugger.LogWarning ("Could not unload " + vessel.name);
@@ -74,7 +79,7 @@ namespace RandomizedSystems.Vessels
 					}
 				}
 			}
-			// Clear the cache
+			// Clear the vessel cache
 			FlightGlobals.Vessels.Clear ();
 			HighLogic.CurrentGame.flightState.protoVessels.Clear ();
 			// If we couldn't unload something, ensure it's not duplicated
@@ -87,7 +92,7 @@ namespace RandomizedSystems.Vessels
 
 		public static bool RemoveVesselFromSystem (Vessel toRemove)
 		{
-			Debugger.LogWarning ("Clearing " + toRemove.vesselName);
+			Debugger.LogWarning ("Despawning " + toRemove.vesselName);
 			if (toRemove.loaded)
 			{
 				Debugger.LogError (toRemove.vesselName + " is loaded!");
@@ -126,17 +131,10 @@ namespace RandomizedSystems.Vessels
 
 		public static PersistentVessel LoadPersistentVessel (string seed, ProtoVessel proto)
 		{
-			PersistentVessel persistentVessel = new PersistentVessel (seed, proto);
-			Guid id = proto.vesselID;
-			if (id == Guid.Empty)
-			{
-				Debugger.LogWarning ("Vessel " + proto.vesselName + " not cached because GUID was empty!");
-			}
-			else
-			{
-				vesselSeeds [id] = seed;
-				persistentVessels [id] = persistentVessel;
-			}
+			PersistentVessel persistentVessel = PersistentVessel.CreateVessel (seed, proto);
+			Guid id = persistentVessel.id;
+			vesselSeeds [id] = seed;
+			persistentVessels [id] = persistentVessel;
 			return persistentVessel;
 		}
 
@@ -151,7 +149,6 @@ namespace RandomizedSystems.Vessels
 					PersistentVessel persistentVessel = persistentVessels [id];
 					if (persistentVessel.loaded)
 					{
-						Debugger.Log ("Vessel: " + v.vesselName + ", seed " + seed + ", ID: " + id.ToString ());
 						if (seed != WarpDrive.seedString)
 						{
 							Debugger.LogWarning ("Vessel is in the wrong seed!");

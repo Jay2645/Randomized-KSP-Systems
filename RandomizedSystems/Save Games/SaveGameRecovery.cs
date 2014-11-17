@@ -33,7 +33,6 @@ namespace RandomizedSystems.SaveGames
 				}
 				if (string.IsNullOrEmpty (appPath))
 				{
-					Debugger.LogError ("Could not find save folder!");
 					return;
 				}
 				foreach (string directory in Directory.GetDirectories(saveFolder))
@@ -45,7 +44,6 @@ namespace RandomizedSystems.SaveGames
 						// Everything is okay!
 						continue;
 					}
-					Debugger.LogWarning ("Attempting recovery for save folder " + thisSave);
 					// We're in trouble here
 					// Look in each save folder for a persistence file
 					string persistence = Path.Combine (directory, AstroUtils.DEFAULT_PERSISTENCE + AstroUtils.SFS);
@@ -56,7 +54,6 @@ namespace RandomizedSystems.SaveGames
 					if (File.Exists (stockSaveGame))
 					{
 						// Found it!
-						Debugger.Log ("Found Kerbol persistence file!");
 						if (string.IsNullOrEmpty (lastSeed))
 						{
 							Debugger.LogWarning ("Could not save old persistence file because the last seed was null.");
@@ -73,7 +70,6 @@ namespace RandomizedSystems.SaveGames
 						continue;
 					}
 					// Nothing we can do. We'll have to keep the default persistence file if we have one.
-					Debugger.LogWarning ("Going to keep default persistence for " + thisSave + ".");
 				}
 			}
 			catch (IOException e)

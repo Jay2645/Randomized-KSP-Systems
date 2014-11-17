@@ -287,7 +287,7 @@ namespace RandomizedSystems.Systems
 			{
 				SystemNamer.NameBody (this);
 			}
-			else if (solarSystem.IsKerbol ())
+			else if (!string.IsNullOrEmpty (name))
 			{
 				planet.bodyName = name;
 			}

@@ -71,11 +71,15 @@ namespace RandomizedSystems.SaveGames
 		/// Will warp to the desired seed, remove all vessels from the entire game, then reload only those in the new snapshot.
 		/// </summary>
 		/// <param name="newSeed">The seed we are warping to.</param>
-		public static void LoadSnapshot (string newSeed)
+		public static void LoadSnapshot (string lastSeed, string newSeed)
 		{
-			string lastSeed = WarpDrive.seedString;
+			Debugger.Log ("Loading snapshot: " + newSeed);
 			WarpDrive.Warp (false, newSeed, false);
-			MergePersistenceVessels (lastSeed, newSeed);
+			// Clear the old vessels
+			ClearSystemVessels (lastSeed);
+			// Add the new vessels
+			AddPersistenceVessels (lastSeed, newSeed);
+			// Save
 			SavePersistence ();
 		}
 
@@ -85,34 +89,42 @@ namespace RandomizedSystems.SaveGames
 		/// <param name="oldSeed">Old seed.</param>
 		/// <param name="newSeed">New seed.</param>
 		/// <param name="removeVesselFromSystem">If set to <c>true</c> remove the active vessel from the old system and add it to the new.</param>
-		public static void LoadSnapshotVessels (string oldSeed, string newSeed, bool removeVesselFromSystem = true)
+		public static void WarpSingleVessel (string oldSeed, string newSeed, Vessel toWarp)
 		{
 			if (string.IsNullOrEmpty (oldSeed) || oldSeed == newSeed)
 			{
 				return;
 			}
-			// Get our current vessel
-			Vessel ourVessel = FlightGlobals.ActiveVessel;
-			// If we don't have an active vessel, clear the whole system
-			if (ourVessel == null)
-			{
-				removeVesselFromSystem = false;
-			}
-			// If we AREN'T clearing the active vessel, note its ID
+			bool removeVesselFromSystem = toWarp != null;
 			Guid vesselID = Guid.Empty;
+			// Note the ID of the vessel we are warping and get it clear of FlightGlobals so it doesn't get unloaded
 			if (removeVesselFromSystem)
 			{
-				vesselID = ourVessel.id;
-				FlightGlobals.Vessels.Remove (ourVessel);
+				vesselID = toWarp.id;
+				FlightGlobals.Vessels.Remove (toWarp);
 			}
-			// Clear all the vessels except for the active vessel (if applicable)
-			// This will also add in the new vessels
-			MergePersistenceVessels (oldSeed, newSeed, vesselID);
+			// Get rid of all the vessels in FlightGlobals
+			ClearSystemVessels (oldSeed, newSeed, vesselID);
+			// Add the new vessels
+			AddPersistenceVessels (oldSeed, newSeed);
+			// Add us back to the active vessel list
 			if (removeVesselFromSystem)
 			{
-				// Add us back to the active vessel list
-				FlightGlobals.Vessels.Add (ourVessel);
-				FlightGlobals.ForceSetActiveVessel (ourVessel);
+				FlightGlobals.Vessels.Add (toWarp);
+				FlightGlobals.ForceSetActiveVessel (toWarp);
+			}
+			// This updates the map view
+			OrbitDriver[] orbitDrivers = Planetarium.Orbits.ToArray ();
+			foreach (OrbitDriver orbit in orbitDrivers)
+			{
+				if (orbit.vessel != null)
+				{
+					Planetarium.Orbits.Remove (orbit);
+				}
+			}
+			foreach (Vessel v in FlightGlobals.Vessels)
+			{
+				Planetarium.Orbits.Add (v.orbitDriver);
 			}
 			// Save us to the present persistence file
 			SavePersistence ();
@@ -133,7 +145,7 @@ namespace RandomizedSystems.SaveGames
 		{
 			try
 			{
-				SaveGame (WarpDrive.seedString, AstroUtils.DEFAULT_PERSISTENCE);
+				SaveGame (WarpDrive.seedString, AstroUtils.DEFAULT_PERSISTENCE, "", false);
 			}
 			catch (Exception e)
 			{
@@ -141,7 +153,7 @@ namespace RandomizedSystems.SaveGames
 			}
 		}
 
-		private static void SaveGame (string seed, string filename, string subfolder = "")
+		private static void SaveGame (string seed, string filename, string subfolder = "", bool printVessels = true)
 		{
 			// Expand subfolder
 			if (subfolder == "")
@@ -156,33 +168,55 @@ namespace RandomizedSystems.SaveGames
 			Game savedGame = HighLogic.CurrentGame.Updated ();
 			GamePersistence.SaveGame (savedGame, filename, subfolder, SaveMode.OVERWRITE);
 			// Log all vessels in the current seed
-			foreach (Vessel v in UnityEngine.GameObject.FindObjectsOfType<Vessel>())
+			if (printVessels)
 			{
-				VesselManager.LoadPersistentVessel (seed, v.BackupVessel ());
+				Debugger.Log ("Vessels in save " + seed + ":");
 			}
-			// This is a hacky way to force the tracking station to update
-			try
+			foreach (ProtoVessel v in HighLogic.CurrentGame.flightState.protoVessels)
 			{
-				GameEvents.onNewVesselCreated.Fire (null);
+				if (printVessels)
+				{
+					Debugger.Log (v.vesselName);
+				}
+				// All this does is makes sure all the loaded vessels are internally set to the new seed
+				VesselManager.LoadPersistentVessel (seed, v);
 			}
-			catch (NullReferenceException)
-			{
-				// Intentionally left blank
-			}
+			ForceTrackingStationUpdate ();
 		}
 
 		/// <summary>
-		/// Clears the old vessels, adds in the vessels from the new seed, and saves the new seed to file.
-		/// Will not warp us anywhere.
+		/// Removes all the vessels from a system.
+		/// </summary>
+		/// <param name="oldSeed">The seed of the vessels we are clearing.</param></param>
+		public static void ClearSystemVessels (string oldSeed)
+		{
+			ClearSystemVessels (oldSeed, "", Guid.Empty);
+		}
+
+		public static void ClearSystemVessels (string oldSeed, string newSeed, Guid doNotFlush)
+		{
+			Debugger.Log ("Flushing vessel cache for seed " + oldSeed + ".");
+			// Remove all old vessels
+			VesselManager.FlushVesselCache (oldSeed, doNotFlush);
+			// Warp any ignored vessels to the new system
+			if (doNotFlush != Guid.Empty)
+			{
+				PersistentVessel currentVessel = VesselManager.GetPersistentVessel (doNotFlush);
+				if (currentVessel != null)
+				{
+					Debugger.Log ("Warping " + currentVessel.name + " to seed " + newSeed);
+					currentVessel.Warp (newSeed);
+				}
+			}
+			ForceTrackingStationUpdate ();
+		}
+
+		/// <summary>
+		/// Adds in the vessels from the new seed and saves the new seed to file.
 		/// </summary>
 		/// <param name="oldSeed">The seed we are leaving.</param>
 		/// <param name="newSeed">The seed we are going to.</param>
-		public static void MergePersistenceVessels (string oldSeed, string newSeed)
-		{
-			MergePersistenceVessels (oldSeed, newSeed, Guid.Empty);
-		}
-
-		public static void MergePersistenceVessels (string oldSeed, string newSeed, Guid doNotFlush)
+		public static void AddPersistenceVessels (string oldSeed, string newSeed)
 		{
 			if (newSeed == AstroUtils.KERBIN_SYSTEM_COORDS && !WarpDrivers.WarpDrive.needsPurge)
 			{
@@ -195,17 +229,6 @@ namespace RandomizedSystems.SaveGames
 				Debugger.LogError ("Could not find persistence file!");
 				return;
 			}
-			// Remove all old vessels
-			VesselManager.FlushVesselCache (oldSeed, doNotFlush);
-			if (doNotFlush != Guid.Empty)
-			{
-				PersistentVessel currentVessel = VesselManager.GetPersistentVessel (doNotFlush);
-				if (currentVessel != null)
-				{
-					currentVessel.Warp (newSeed);
-				}
-			}
-			Debugger.Log ("Vessels flushed!");
 			// Check to see if we already have a persistence file for this system
 			if (SystemPersistenceExists (persistence, newSeed))
 			{
@@ -225,11 +248,29 @@ namespace RandomizedSystems.SaveGames
 				// Find FLIGHTSTATE node in the root node
 				ConfigNode flightStateNode = root.GetNode ("FLIGHTSTATE");
 				// Generate new FlightState from the root
-				SolarData.currentSystem.flightState = new FlightState (flightStateNode, HighLogic.CurrentGame);
-				foreach (ProtoVessel proto in SolarData.currentSystem.flightState.protoVessels)
+				FlightState flightState = new FlightState (flightStateNode, HighLogic.CurrentGame);
+				// Load each ProtoVessel in the FlightState
+				List<ProtoVessel> spawnedVessels = new List<ProtoVessel> ();
+				List<Vessel> activeVessels = new List<Vessel> ();
+				Debugger.Log (flightState.protoVessels.Count + " vessels in " + newSeed + ".");
+				foreach (ProtoVessel proto in flightState.protoVessels)
 				{
-					VesselManager.LoadVessel (newSeed, proto);
+					Vessel vessel = VesselManager.LoadVessel (newSeed, proto);
+					if (vessel == null)
+					{
+						Debugger.LogError (proto.vesselName + " was not spawned!");
+					}
+					else
+					{
+						Debugger.Log (vessel.vesselName + " is now in seed " + newSeed + ".");
+						spawnedVessels.Add (proto);
+						activeVessels.Add (vessel);
+					}
 				}
+				flightState.protoVessels = spawnedVessels;
+				HighLogic.CurrentGame.flightState = flightState;
+				FlightGlobals.Vessels.Clear ();
+				FlightGlobals.Vessels.AddRange (activeVessels);
 				if (newSeed == AstroUtils.KERBIN_SYSTEM_COORDS)
 				{
 					// We've now purged the system of all the "old" data
@@ -242,8 +283,21 @@ namespace RandomizedSystems.SaveGames
 				HighLogic.CurrentGame.flightState = new FlightState ();
 				Debugger.LogWarning ("Created a blank star system for seed " + newSeed);
 			}
-			Debugger.Log ("All vessels have been merged successfully.");
+			Debugger.Log ("All vessels have been merged.");
 			SavePersistence ();
+		}
+
+		private static void ForceTrackingStationUpdate ()
+		{
+			// This is a hacky way to force the tracking station to update
+			try
+			{
+				GameEvents.onNewVesselCreated.Fire (null);
+			}
+			catch (NullReferenceException)
+			{
+				// Intentionally left blank
+			}
 		}
 	}
 }

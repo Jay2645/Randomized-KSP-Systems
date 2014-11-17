@@ -32,8 +32,14 @@ namespace RandomizedSystems.Parts
 		/// </summary>
 		public void JumpToKerbol ()
 		{
+			CelestialBody reference = FlightGlobals.currentMainBody;
+			if (reference.referenceBody.name != reference.name)
+			{
+				ScreenMessages.PostScreenMessage ("Warp Drive cannot be activated. Please enter orbit around the nearest star.", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+				return;
+			}
 			WarpDrive.SetNextWarpAction (new WarpDrive.OnWarpDelegate (WarpMessage), new WarpDrive.OnWarpDelegate (ResetKerbolPrompt));
-			WarpDrive.JumpToKerbol (true);
+			WarpDrive.JumpToKerbol (true, vessel);
 		}
 
 		private void WarpMessage ()
